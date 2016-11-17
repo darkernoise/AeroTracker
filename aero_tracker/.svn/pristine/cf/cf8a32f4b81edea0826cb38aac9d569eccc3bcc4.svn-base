@@ -1,0 +1,124 @@
+'''
+Created on Jun 4, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import numpy as np
+
+class SensorDevice(object):
+    '''
+    classdocs
+    '''
+    DEVICE_PREFIX = "hci"
+    DEC_PRECISION = 8
+    
+    cluster_id = ""
+    sensor_id = ""
+    device_name = ""
+    device_num = -1
+    device_type = ""
+    device_bus = ""
+    mac_address = ""
+    is_up = False
+    status = ""
+    degrees_turned = 0
+    distance_from_base = 0
+    height_from_ground = 0
+    
+    _params = None
+    _x_set = False
+    _y_set = False
+    _x = 0.0
+    _y = 0.0
+
+    @staticmethod
+    def create_from_data_list(data_list, params):
+        rval = SensorDevice(params)
+        for ln in data_list:
+            vals = ln.split(" ")
+            if (ln[0:len(SensorDevice.DEVICE_PREFIX)] == SensorDevice.DEVICE_PREFIX):
+                #device Line
+                subvals = vals[0].split(":")
+                rval.device_name = subvals[0]
+                rval.device_num = int(rval.device_name[len(SensorDevice.DEVICE_PREFIX):len(rval.device_name)])
+                rval.device_type = vals[1]
+                rval.device_bus = vals[4]
+            elif (ln[0:2] == "BD"):
+                rval.mac_address = vals[2]
+            elif ((ln[0:2] == "UP") or (ln[0:4] == "DOWN")):
+                if (vals[0] == "UP"):
+                    rval.is_up = True
+                else:
+                    rval.is_up = False
+        
+        return rval
+    
+    @property
+    def X(self):
+        if (not self._x_set):
+            an = np.deg2rad(self.degrees_turned - 90)
+            self._x = round(self.distance_from_base * np.cos(an),self.DEC_PRECISION)
+            self._x_set = True
+        return self._x
+    
+    @property
+    def Y(self):
+        if (not self._y_set):
+            an = np.deg2rad(self.degrees_turned + 90)
+            self._y = round(self.distance_from_base * np.sin(an), self.DEC_PRECISION)
+            self._y_set = True
+        return self._y
+        
+    @property
+    def Z(self):
+        return self.height_from_ground
+    
+    def to_bytes(self, delimiter:str):
+        return self.cluster_id + \
+            delimiter + \
+            self.sensor_id + \
+            delimiter + \
+            self.device_name + \
+            delimiter + \
+            str(self.device_num) + \
+            delimiter + \
+            self.device_type + \
+            delimiter + \
+            self.device_bus + \
+            delimiter + \
+            self.mac_address + \
+            delimiter + \
+            str(self.is_up) + \
+            delimiter + \
+            self.status + \
+            delimiter + \
+            str(self.degrees_turned) + \
+            delimiter + \
+            str(self.distance_from_base) + \
+            delimiter + \
+            str(self.height_from_ground)
+
+    def __init__(self, params):
+        '''
+        Constructor
+        '''
+        self._params = params
+        
+        return

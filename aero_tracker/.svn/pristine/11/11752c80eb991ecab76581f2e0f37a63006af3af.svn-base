@@ -1,0 +1,205 @@
+'''
+Created on Aug 12, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import socket
+import time
+import sys
+import traceback
+from multiprocessing.connection import Connection
+from aero_tracker.ble.ble_packet import BLE_Packet
+from aero_tracker.exception.at_exception import AT_Exception
+from aero_tracker.sensor.sensor_device import SensorDevice
+from aero_tracker.filter.kalman_filter_queue import KalmanFilterQueue
+from aero_tracker.target.target_data_logger import TargetDataLogger
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.network.at_data_proc_address import AT_DataProcAddress
+from aero_tracker.network.at_sensor_data_packet import AT_SensorDataPacket
+from aero_tracker.network.at_protocol import AT_Protocol
+from aero_tracker.sensor.rssi_to_distance import RSSIToDistance
+
+class AT_Target(object):
+    '''
+    Represents a single target tracked by multiple sensors.
+    '''
+    WRITE_DEBUG_TARGET_LOG = True
+    DEBUG_WRITE_CNT = 100
+    
+    _params = None
+    _sensor = None #Type SensorDevice
+    _target_id = ""
+#     _data_proc_socket = None
+    _first_ble_packet = None
+    _filter = None
+    _data_logger = None
+    _cnt = 0
+    _time_start = None
+    _log = None
+    _dir_store = None #proxy to AT_DirectoryStore
+#     _data_proc_address = None #AT_DataProcAddress
+    _rssi_dist_calc = None
+    _pipe_connection = Connection
+    
+    @property
+    def sensor_id(self):
+        return self._sensor.sensor_id
+    
+    def stop(self):
+        self._log.log3(msg1='Stop requested for Sensor', msg2=self._sensor.sensor_id, msg3='Target', \
+            caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+#         self._closeServerSocket()
+        
+    def terminate(self):
+        self.stop()
+    
+    def enqueue(self, ble_pkt:BLE_Packet):
+        try:
+            #Setup on first call
+            if (self._first_ble_packet == None):
+                self._time_start = time.time()
+                self._first_ble_packet = ble_pkt
+            dist = self._rssi_dist_calc.calc_distance(rssi=ble_pkt.rssi)
+#             print('RSSI: ', ble_pkt.rssi, ' dist: ', dist)
+            fltr_itm = self._filter.enqueue(val=dist, timestamp=ble_pkt.packet_timestamp)
+            if (fltr_itm != None): #[float, float, float]
+                #If debug logger is on, write to the log file
+                if (self._data_logger != None):
+                    self._data_logger.write(data_filered=fltr_itm[0], data_raw=fltr_itm[1], rssi=ble_pkt.rssi, timestamp=fltr_itm[2])
+#                 if (self._data_proc_address == None):
+#                     self._data_proc_address = self._get_data_proc_srvr_address(target_id=ble_pkt.target_id)
+#                     self._openServerSocket(data_proc_addr=self._data_proc_address)
+                snsr_data_pkt = AT_SensorDataPacket(cluster_id=self._sensor.cluster_id, sensor_id=ble_pkt.sensor_id, \
+                    target_id=ble_pkt.target_id, filter_dist=fltr_itm[0], raw_dist=fltr_itm[1], \
+                    rssi=ble_pkt.rssi, timestamp=fltr_itm[2])
+#                 if (self._data_proc_socket == None):
+#                     self._log.log4(msg1='Sensor', msg2=self._sensor.sensor_id, msg3='Target', \
+#                         msgv4='lost its socket connection', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+#                     time.sleep(1)
+#                     self._data_proc_address = None #Reset so it will reconnect on next call
+#                     return
+#                 send_stat = self._data_proc_socket.send(snsr_data_pkt.get_packet_bytes())
+                self._pipe_connection.send(obj=snsr_data_pkt.get_packet_bytes())
+                self._cnt += 1
+                if (self._cnt >= self.DEBUG_WRITE_CNT):
+#                     self._log.log5(msg1='Sensor', msg2=self._sensor.sensor_id, msg3='Target', \
+#                         msg4=self._target_id, msg5='Sent:' + str(self._cnt), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+                    rate_psec = self._packet_rate_per_sec(start_time=self._time_start, pkt_cnt=self._cnt)
+                    self._log.log5(msg1='Sensor', msg2=self._sensor.sensor_id, msg3='Target', \
+                        msg4=self._target_id, msg5='Sent:' + str(self._cnt) + ' at: ' + str("%.0f" % rate_psec) + ' pkt/sec', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+                    self._cnt = 0
+                    self._time_start = time.time()
+                    if (rate_psec > self._params.samples_per_sec):
+                        #Pause to let other processes get in the queue
+                        time.sleep(0.05)
+        except Exception as ex:
+#             traceback.print_tb(sys.exc_info(), limit=1, file=sys.stdout)
+            traceback.print_exc()
+            self._log.log2(msg1='Exception:', msg2=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+            self._log.print_traceback(ex=ex, caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+#             self._closeServerSocket()
+#             self._data_proc_address = None #Reset so it will reconnect on next call
+        return
+    
+    def get_target_id(self):
+        return self._target_id
+
+    def __init__(self, 
+        log:AT_Logging, 
+        sensor:SensorDevice, 
+        target_id:str, 
+        dir_store,
+        pipe_connection:Connection, 
+        params):
+        '''
+        Constructor
+        '''
+        self._params = params
+        self._log = log
+        self._sensor = sensor
+        self._target_id = target_id
+        self._pipe_connection = pipe_connection
+        self._dir_store = dir_store
+        self._filter = KalmanFilterQueue()
+        self._rssi_dist_calc = RSSIToDistance(sensor_id=sensor.sensor_id,params=params, dir_store=dir_store)
+        
+        if ((self.WRITE_DEBUG_TARGET_LOG) and (self._params.debug_level >= 4)):
+            log_file = str(self.sensor_id) + '_' + str(target_id) + '.log'
+            #TODO - Replace with a parameter below
+            self._data_logger = TargetDataLogger(log_directory='/var/log/aerotracker/', file_name=log_file, max_write_lines=100)
+        return
+    
+    def _packet_rate_per_sec(self, start_time, pkt_cnt):
+        '''
+        Returns the number of packets processed per second.
+        '''
+        time_passed = time.time() - start_time
+        return pkt_cnt / time_passed
+    
+#     def _get_data_proc_srvr_address(self, target_id:str)->AT_DataProcAddress:
+#         '''
+#         Contact the directory server and get a data processing server for the given target.
+#         '''
+#         rval = None
+#         while (rval == None):
+#             try:
+#                 rval = self._dir_store.get_data_port_for_target(sensor=self._sensor, target_id=target_id)
+#             except Exception as ex:
+#                 self._log.log2(msg1='Exception:', msg2=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+#             if (rval == None):
+#                 self._log.log2(msg1='Data proc server unavailable for target:', msg2=target_id, caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+#                 self._log_data_proc_servers() 
+#                 time.sleep(1)
+#         
+#         self._data_proc_address =rval
+#         return self._data_proc_address
+#     
+#     def _log_data_proc_servers(self):
+#         assgns = self._dir_store.get_data_proc_srvr_assignments()
+#         for assgn in assgns:
+#             self._log.log3(msg1='Data Proc Srvr Assigned:', msg2='target: ' + assgn[0], msg3=str(assgn[1]), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+#         return
+    
+#     def _openServerSocket(self, data_proc_addr:AT_DataProcAddress):
+#         self._data_proc_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#         self._data_proc_socket.connect((data_proc_addr.address, int(data_proc_addr.port)))
+#         self._log.log2(msg1='Connected on socket:', msg2=str(data_proc_addr), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+#         return
+#         
+#     def _closeServerSocket(self):
+#         try:
+#             self._log.log3(msg1='Disconnecting Sensor', msg2=self._sensor.sensor_id, msg3='Target', \
+#                         caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+#         except:
+#             pass
+#         if (self._data_proc_socket != None):
+#             try:
+#                 if (not self._data_proc_socket._closed):
+#                     self._data_proc_socket.close()
+#             except:
+#                 pass
+#         self._data_proc_socket = None
+#         return
+    
+    def _send_line_term(self):
+        self._data_proc_socket.send(bytes(self.LINE_TERM,'ascii'))
+        return
+    
+    

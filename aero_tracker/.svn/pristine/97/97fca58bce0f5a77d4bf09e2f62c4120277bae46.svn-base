@@ -1,0 +1,172 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import time
+import socketserver
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.network.at_protocol import AT_Protocol
+from aero_tracker.exception.at_exception import AT_Exception
+
+class AT_SocketHandlerBase(socketserver.BaseRequestHandler):
+    '''
+    Base class for incoming socket connections speaking the AT protocol.
+    '''
+    READ_LEN = 1024
+    STATISTICS_UPDATE_CNT = 1000
+    
+    _params = None
+    _log = None
+    _terminator = '\n'
+    _address = None
+    _dir_store = None
+    _packet_timer = None
+    _packet_cnt = 0
+    _receive_stats_psec = 0
+    
+    @property
+    def receive_rate(self):
+        return self._receive_stats_psec
+    
+    @property
+    def log(self):
+        return self._log
+    
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def terminator(self):
+        '''
+        Line Terminator for data packet.
+        '''
+        return self._terminator
+         
+    @property
+    def address(self):
+        return self._address
+    
+    @property
+    def dir_store(self):
+        return self._dir_store
+    
+    def process_data(self, data_packet, *args):
+        '''
+        This method must be redefined by the SubClass.
+        '''
+        raise AT_Exception(source=self, method='process_data', message='Must redefine process_data', details='Abstract method')
+        return
+    
+    def handle_start(self, connection, address, *args):
+        '''
+        Called at the initial connection from a socket and before entering in a data receive loop. Redefine 
+        for any actions that should be executed once before data receive.
+        '''
+        return
+    
+    def handle_end(self, connection, address, *args):
+        '''
+        Called when the socket has disconnected and about to shut down.
+        '''
+        return
+    
+#     def handle(self, connection, address, *args):
+    def handle(self):
+        self._params = self.server.params
+        if (self._log == None):
+            self._log = AT_Logging(params=self.server.params,log_file=self.server.log_file)
+        self._dir_store = self.server.args[0]
+        self._terminator = self.server.terminator
+        self._address = self.client_address
+        client_connected = True
+        prior_data = ""
+        has_prior_data = False
+        rec_cnt = 0
+        if (self._packet_timer == None):
+            self._packet_timer = time.time()
+        
+        self.log.log4(msg1='Data connection:', msg2=str(self.request), msg3='Connected at:', msg4=str(self.client_address), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+        self.handle_start(connection=self.request, address=self.client_address)
+        while (client_connected):
+            try:
+                raw_dat = self.request.recv(1024)
+                if raw_dat == b'':
+                    client_connected = False
+                else:
+# #                 data = str(connection.recv(self.READ_LEN), 'ascii')
+                    data = str(raw_dat.strip(), 'ascii')
+                    rec_cnt += 1
+#                 self._log.log2(msg1=data, msg2=str(rec_cnt), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+                    if (has_prior_data):
+                        data = prior_data + data
+                        prior_data = "" #Clear prior data after use.  
+    #                 #Critical Note: A client has only two read cycles to send a complete packet.
+    #          
+                    if (data.find(self.terminator) < 0):
+                        #command is incomplete
+                        self.log.log4(msg1='Incomplete data received:', msg2=str(self.client_address), msg3='data:', msg4=str(data), caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                        prior_data = ""
+                        data = ""
+                    else:
+                        pkts = data.split(sep=AT_Protocol.LINE_BREAK)
+                        num_pkts = len(pkts)
+                        for i in range(0, num_pkts):
+                            pkt = pkts[i]
+                            pkt_len = len(pkt)
+                            if (pkt_len > 0):
+                                if (i == num_pkts - 1):
+                                    pkt = pkt.strip()
+                                if (pkt[-1] != self.terminator):
+                                    #partial packet
+                                    prior_data += data
+                                    has_prior_data = True
+                                else:
+                                    rec_cnt += 1
+                                    self._packet_cnt += 1
+                                    has_prior_data = False
+                                    self.process_data(pkt)
+                                    self._statistics_update()
+            except Exception as ex:
+#                 time.sleep(.5)
+                self.log.log3(msg1='Exception reading socket:', msg2=str(ex), msg3=type(ex).__name__, caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+                client_connected = False
+            if (not client_connected):
+                self.log.log4(msg1='Data disconnected:', msg2=str(self.client_address[0]), msg3='From:', msg4=str(self.request), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+                try:
+                    self.terminate()
+                    self.close()  
+                except Exception as ex:
+                    pass  
+#         self.handle_end(connection, address, *args)
+        print("Exiting the listener handler")
+        return
+    
+    def _statistics_update(self):
+        if (self._packet_cnt >= self.STATISTICS_UPDATE_CNT):
+            time_passed = time.time() - self._packet_timer
+            self._receive_stats_psec = self._packet_cnt / time_passed
+            self.log.log3(msg1='Receive Rate:', msg2="%.0f" % self._receive_stats_psec, msg3='packets per/sec', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+            self._packet_timer = time.time()
+            self._packet_cnt = 0
+        return
+            
+    

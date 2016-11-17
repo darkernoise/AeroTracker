@@ -1,0 +1,191 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+# import threading
+import time
+import sys
+import os
+from subprocess import check_output
+import signal
+import multiprocessing as mp
+from aero_tracker.exception.at_exception import AT_Exception
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_ProcessBase(mp.Process):
+    '''
+    Standard base for AT threaded classes.
+    '''
+    
+    JOIN_TIMEOUT = 1000
+    
+    child_processes = []
+    
+    @property
+    def is_running(self):
+        return self._run and self.is_alive()
+    
+    @property
+    def log(self):
+        return self._log
+    
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def process_name(self):
+        rval = 'Process'
+        try:
+            if (self.pid != None):
+                rval = 'Process: ' + str(self.pid)
+        except:
+            pass
+        return rval
+    
+    @property
+    def thread_lock(self):
+        return self._lock
+    
+    ##############################
+    # Variables
+    ##############################
+    _run = False
+    _params = None
+    _log = None
+    _lock = None
+    _stop_executed = False
+    
+    ##############################
+    # Public Methods
+    ##############################
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        raise AT_Exception(source=self, method='run', message='AT_ThreadedBase.run_clycle must be redefined')
+        return
+    
+    def exception_handler(self, ex):
+        '''
+        Called when an exception is thrown in the main loop.  By default the exception is trapped unless this 
+        method throws it.
+        '''
+        return
+    
+    def finally_hander(self):
+        '''
+        Executed in a finally block in the exception handler.
+        '''
+        return
+    
+    def before_close(self):
+        '''
+        Executes before the run cycle exists.
+        '''
+        return
+    
+    def run(self):
+        self.log.log2(msg1=self.process_name, msg2='started:', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)   
+        while (self._run):
+            try:
+                self.run_clycle()
+            except Exception as ex:
+                self.log.log3(msg1=self.process_name, msg2='exception:', msg3=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                self.log.print_traceback(ex=ex, caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                self.exception_handler(ex)
+#         self.finally_hander()
+        self.before_close()
+        self.log.log2(msg1=self.process_name, msg2='ended:', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+        return 
+    
+    def start(self):
+        self.thread_lock.acquire()
+        if (not self._run):
+            self._run = True
+            self.log.log2(msg1=self.process_name, msg2='start requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+            super().start()
+        self.thread_lock.release()
+        return
+    
+    #Server stop signaled
+    def stop(self):
+        self._run = False;
+        if (not self._stop_executed):
+            self._stop_executed = True
+            self.log.log2(msg1=self.process_name, msg2='stop requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+#             self.cleanUp()
+            try:
+                self._linux_kill()
+                self.terminate()
+            except:
+                pass
+        return
+    
+    def cleanUp(self):
+        if (self.log != None):
+            self.log.log2(msg1=self.process_name, msg2='cleaning up program resources', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+        else:
+            print(self.process_name, 'Cleaning up program resources')
+            
+        
+#         for proc in self.child_processes:
+#             try:
+# #                 proc.stop()
+# #                 time.sleep(1)
+#                 proc.kill()
+# #                 proc.join(self.JOIN_TIMEOUT)
+#             except:
+#                 pass
+#         time.sleep(1)
+        return
+    
+    def set_new_log(self, log_file):
+        '''
+        Sets a new log file.
+        '''
+        self._log = AT_Logging(params=self._params, log_file=log_file)
+        return
+    
+    def __init__(self, params, log_file=''):
+        super().__init__()
+        self._params = params
+        self._log = AT_Logging(params=self._params, log_file=log_file)
+        self._lock = mp.RLock()
+        self.daemon = True
+        return
+    
+    def __del__(self):
+        return
+    
+    def _linux_kill(self):
+        try:
+            proc_pid = os.getpid()
+            if (proc_pid != None) and (proc_pid > 0):
+                print('Killing process: ' + str(proc_pid))
+                os.kill(int(proc_pid), signal.SIGKILL)
+#                 check_output('kill -9 -' + str(proc_pid)).decode(sys.stdout.encoding).strip()
+        except:
+            pass
+         
+        return
+    
+    

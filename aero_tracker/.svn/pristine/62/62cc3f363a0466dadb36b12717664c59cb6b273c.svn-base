@@ -1,0 +1,48 @@
+'''
+Created on Nov 5, 2016
+
+@author: Joel Blackthorne
+'''
+
+import time
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_DataRate(object):
+    '''
+    Calculates processing rate per unit of time.
+    '''
+    
+    TIME_UNIT_SECOND = 0
+    TIME_UNIT_MINUTE = 1
+    
+    _log = AT_Logging
+    _cnt = 0
+    _start_time = time.time()
+    _report_cnt = 1000
+    _report_label = ''
+    
+    def reset(self):
+        self._cnt = 0
+        self._start_time = time.time()
+        return
+    
+    def increment_cnt(self):
+        self._cnt += 1
+        if (self._cnt >= self._report_cnt):
+            time_passed = time.time() - self._start_time
+            rate = self._cnt / time_passed
+            self._log.log3(msg1=self._report_label + ' at:', 
+                msg2=str(self._cnt) + ' recs', 
+                msg3='at ' + "%.0f" % rate + ' units/sec', 
+                caller=self, msgty=AT_Logging.MSG_TYPE_INFO)   
+            self.reset()
+
+    def __init__(self, log, report_label, report_cnt=1000, time_unit=0):
+        '''
+        Constructor
+        '''
+        self._report_label = report_label
+        self._log = log
+        self._report_cnt = report_cnt
+        self.reset()
+        return

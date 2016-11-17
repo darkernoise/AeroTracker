@@ -1,0 +1,293 @@
+'''
+Created on Jun 16, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+from aero_tracker.data.sphere_coordinates import SphereCoordinates
+import numpy as np
+import scipy.stats
+
+class AT_Trilateration(object):
+    '''
+    Implementation of 3D trilateration that specifically handles scenerios when
+    spheres do not actually touch.  This class is designed such that the more
+    cartesian coordinates input, the more accurate the results.
+    
+    Being that this class is written with radio triangulation in mind, the 
+    cartesian coordinates should be-prefiltered.
+    
+    Coordinate counts in regards to accuracy:
+    2: very rough estimate
+    3: reasonable estimate
+    4: accurate estimate
+    +n : improvement over 4 ^2    
+    '''
+    INCREMENT_COMPLETE = -99
+    MEDIAN_NOISE_CUT = 0.2 #Cut off lowest and highest percent
+    
+    _result = None
+    _pair_indexes = []
+    
+    @staticmethod
+    def get_test_intersection(x,y,z):
+        vect_inter = np.array([x,y,z]) #Intersecting vector
+        sphere_coords_list = []
+        
+        vectb = np.array([0,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # Base
+        
+        vectb = np.array([0,0,16])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # A
+        
+        vectb = np.array([0,33,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # B
+        
+        vectb = np.array([33,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # C
+        return sphere_coords_list
+    
+    @staticmethod
+    def get_imperfect_intersection(x,y,z):
+        '''
+        Perfectly create a slightly off intersection set
+        '''
+        vect_inter = np.array([x,y,z]) #Intersecting vector
+        sphere_coords_list = []
+        
+        vectb = np.array([0,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina) + .8
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # Base
+        
+        vectb = np.array([0,0,16])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina) - .5
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # A
+        
+        vectb = np.array([0,33,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina) - .2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # B
+        
+        vectb = np.array([33,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina) + 2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # C
+        return sphere_coords_list
+    
+    @staticmethod
+    def get_no_touch_intersection(x,y,z):
+        '''
+        Perfectly intersection set where the spheres really don't intersect
+        '''
+        vect_inter = np.array([x,y,z]) #Intersecting vector
+        sphere_coords_list = []
+        
+        vectb = np.array([0,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        mag = mag / 2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # Base
+        
+        vectb = np.array([0,0,16])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        mag = mag / 2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # A
+        
+        vectb = np.array([0,33,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        mag = mag / 2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # B
+        
+        vectb = np.array([33,0,0])
+        bmina = vectb - vect_inter
+        mag = np.linalg.norm(bmina)
+        mag = mag / 2
+        sphere_coords_list.append(SphereCoordinates(vectb[0],vectb[1],vectb[2],mag,1)) # C
+        return sphere_coords_list
+    
+    def get_result(self):
+        return self._result
+    
+    def __init__(self, sphere_coords_list):
+        '''
+        Constructor
+        '''
+        if (len(sphere_coords_list) < 3):
+            raise Exception("There must be at least 3 inputs for this object")
+        
+        #Get sets to process
+        set_results = []
+        coord_sets = self._get_coord_sets(sphere_coords_list)
+        for cset in coord_sets:
+            rslt = self._trilaterate_set(cset[0], cset[1], cset[2])
+            if (rslt != None):
+                valid_rslt = self._get_valid_result(rslt, cset[3])
+                set_results.append(valid_rslt)
+        
+        self._result = self._avg_set_results(set_results)  
+        return
+    
+    def _avg_set_results(self, set_results):
+        x = 0
+        y = 0
+        z = 0
+        
+        if (len(set_results) == 0):
+            return [x,y,z]
+        
+        x_list = []
+        y_list = []
+        z_list = []
+        
+        for rslt in set_results:
+                x_list.append(rslt[0])
+                y_list.append(rslt[1])
+                z_list.append(rslt[2])
+        
+        x_vals = np.array(x_list)
+        y_vals = np.array(y_list)
+        z_vals = np.array(z_list)
+        
+        x = scipy.stats.trim_mean(a=x_vals, proportiontocut=self.MEDIAN_NOISE_CUT)
+        y = scipy.stats.trim_mean(a=y_vals, proportiontocut=self.MEDIAN_NOISE_CUT)
+        z = scipy.stats.trim_mean(a=z_vals, proportiontocut=self.MEDIAN_NOISE_CUT)
+        
+        return [x,y,z]
+    
+    def _get_coord_sets(self, sphere_coords_list):
+        '''
+        Creates unique grouping of coordinate sets into groups of 4 spheres
+        '''
+        num_spheres = len(sphere_coords_list)
+        if (num_spheres < 4):
+            return sphere_coords_list
+        
+        rslt = []
+        istart = 0
+        for i in range(istart, num_spheres):
+            ind_a = i
+            ind_b = self._get_index_wrapped(ind_a,num_spheres)
+            ind_c = self._get_index_wrapped(ind_b,num_spheres)
+            ind_d = self._get_index_wrapped(ind_c,num_spheres)
+            cset = [sphere_coords_list[ind_a], sphere_coords_list[ind_b], sphere_coords_list[ind_c], sphere_coords_list[ind_d]]
+            rslt.append(cset)
+        
+        return rslt
+    
+    def _get_index_wrapped(self, i, totalnum):
+        if (i + 1 >= totalnum):
+            return 0
+        return i + 1
+    
+    def _get_valid_result(self, trilateration_rslt, sp4):
+        rslt_a = trilateration_rslt[0]
+        rslt_b = trilateration_rslt[1]
+        
+        pN = sp4.get_coordinates_array()
+        dist_a = np.abs(np.linalg.norm(pN - rslt_a) - sp4.R)
+        dist_b = np.abs(np.linalg.norm(pN - rslt_b) - sp4.R)
+        if (dist_a < dist_b):
+            return rslt_a
+        else:
+            return rslt_b
+        return None
+    
+    def _get_forth_sphere(self,sphere_coords_list, index):
+        if (len(sphere_coords_list) > (index + 3)):
+            return sphere_coords_list[index + 3]
+        elif (index > 0):
+            return sphere_coords_list[0]
+        return None
+    
+    
+    def _trilaterate_set(self, spA, spB, spC):
+        '''
+        Primary trilateration routine.
+        '''
+        P1 = spA.get_coordinates_array();
+        P2 = spB.get_coordinates_array();
+        P3 = spC.get_coordinates_array();
+        #precalculations
+        p2minp1 = P2 - P1
+        p3minp1 = P3 - P1
+        sqR1 = np.square(spA.R)
+        sqR2 = np.square(spB.R)
+        sqR3 = np.square(spC.R)
+        #vector orienting
+        d = np.linalg.norm(p2minp1)
+        ex = p2minp1 / d 
+        i = np.dot(ex, p3minp1)
+        iex = i * ex
+        ey_tmp = (p3minp1 - iex)
+        ey = ey_tmp / np.linalg.norm(ey_tmp)
+        ez = np.cross(ex, ey)
+        j = np.dot(ey,p3minp1)
+        
+        x = (sqR1 - sqR2 + np.square(d)) / (2 * d)
+        if (not self._spheres_intersect(d, spA, spB)):
+#             print("Spheres do not intersect!")
+            return None
+        else:
+            #Calculate intersection
+            y_tmp = (sqR1 - sqR3 + np.square(i) + np.square(j)) / (2 * j)
+            y_tmp2 = (i / j) * x
+            y = y_tmp - y_tmp2
+            z_tmp = sqR1 - np.square(x) - np.square(y)
+            if (z_tmp < 0):
+#                 print("Spheres do not intersect!")
+                return None
+            z = np.sqrt(z_tmp)
+        
+            p_tmp = P1 + (x * ex) + (y * ey)
+            zez = z * ez
+            p1 = p_tmp + zez
+            p2 = p_tmp - zez
+        return [p1, p2]
+    
+    def _spheres_intersect(self, d, spA, spB):
+        low = d - spA.R
+        high = d + spA.R
+        if ((low < spB.R) and (spB.R < high)):
+            return True
+        return False
+    
+#Tester
+# coords = []
+# coords.append(SphereCoordinates(0,0,0,28,1)) # Base
+# coords.append(SphereCoordinates(0,33,0,22,2)) #0 degree
+# coords.append(SphereCoordinates(33,0,0,30,6)) #0 degree
+# coords = Trilateration.get_test_intersection(18,16.23,35.11)
+# coords = Trilateration.get_imperfect_intersection(18,16.23,35.11)
+# coords = Trilateration.get_no_touch_intersection(18,16.23,35.11)
+# 
+# obj = Trilateration(coords)  
+# rslt = obj.get_result() 
+# print([np.round(rslt[0], 2),np.round(rslt[1], 2),np.round(rslt[2], 2)])   

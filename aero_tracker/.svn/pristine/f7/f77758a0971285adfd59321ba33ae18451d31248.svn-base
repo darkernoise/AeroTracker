@@ -1,0 +1,79 @@
+'''
+Created on Nov 12, 2016
+
+@author: Joel Blackthorne
+'''
+import os
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
+class AT_GUI_Base(object):
+    '''
+    Standard base functionality for all AeroTracker front-end components.
+    '''
+    SOURCE_DIRECTORY = 'aero_tracker'
+    GLADE_DIR = 'glade'
+    
+    _glade_bldr = Gtk.Builder()
+    _window_id = 'window_id'
+    _glade_file = 'glad.glade'
+    _min_window_height = 600
+    _min_window_width = 800
+    
+    @property
+    def glade_bldr(self):
+        return self._glade_bldr
+    
+    @staticmethod
+    def get_base_dir():
+        rval = os.getcwd()
+        if (rval.endswith('gui')):
+            rval = rval[:-17]
+        elif(rval.endswith('aerotracker' + os.sep + 'aero_tracker')):
+            rval = rval[:-13]
+        return rval
+    
+    '''
+    Events Section
+    '''
+    def on_window_delete(self, *args):
+        '''
+        Standard event handler for main window delete.
+        '''
+        Gtk.main_quit(*args)
+        
+    def on_window_show(self, *args):
+        '''
+        Standard event handler for main window delete.
+        '''
+        return
+    
+    def get_gui_object(self, object_id:str):
+        return self.glade_bldr.get_object(object_id)
+    
+    def _load_glade(self):
+        self.glade_bldr.add_from_file(self._glade_file_path())
+        self.glade_bldr.connect_signals(self)
+        window = self.glade_bldr.get_object(self.WINDOW_ID)
+        window.set_size_request(self._min_window_width,self._min_window_height)
+        window.show_all()
+        return
+    
+    def _glade_file_path(self)->str:
+        rval = os.path.normpath(AT_GUI_Base.get_base_dir() + os.sep + self.SOURCE_DIRECTORY + os.sep + self.GLADE_DIR + os.sep + self._glade_file)
+        return rval
+    
+
+    def __init__(self, window_id:str, glade_file:str, min_window_height=600, min_window_width=800):
+        '''
+        Constructor
+        '''
+        self._min_window_width = min_window_width
+        self._min_window_height = min_window_height
+        self._window_id = window_id
+        self._glade_file = glade_file
+        self._load_glade()
+        return
+        
+        

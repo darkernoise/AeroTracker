@@ -1,0 +1,142 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+import time
+import multiprocessing as mp
+# from aero_tracker.trilateration.time_slice_queue import TimeSliceQueue
+from aero_tracker.trilateration.at_time_slice_queue import AT_TimeSliceQueue
+from aero_tracker.network.at_sensor_data_packet import AT_SensorDataPacket
+from aero_tracker.network.at_socket_handler_base import AT_SocketHandlerBase
+from aero_tracker.trilateration.at_trilateration_worker import AT_TrilaterationWorker
+from aero_tracker.server.data_proc.at_data_proc_worker_mp_manager import AT_DataProcWorkerMPManager
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_DataProcWorkerHandler(AT_SocketHandlerBase):
+    '''
+    Socket data handler spawned to receive incoming data for a target and add the data to a central queue.
+    '''
+    POST_READ_SLEEP_TIME = 0.01
+    ERROR_RECEIVE_RATE = 100 #This is higher than possible
+    ERROR_SLEEP_TIME = 0.01
+    
+    _pipe_pool = None
+    _pipe_index = -1
+    _pipe_conn = None
+#     _time_slice_queue = None
+    _rec_cnt = 0
+    _worker_manager = None
+    
+    def process_data(self, data_packet, *args):
+        '''
+        Receives incoming data from the sensor cluster.
+        
+        Note:
+        self.server.trilat_queue is defined at the sever level and is a multiprocessing safe queue which
+        is read/written to by each socket connection.
+        '''
+        try:
+            if (self._pipe_pool == None):
+                self._pipe_pool = self.server.pipe_pool
+            if (self._pipe_index < 0):
+                self._pipe_index = self._pipe_pool.get_available_pool_index()
+            if (self._pipe_conn == None):
+                self._pipe_conn = self._pipe_pool.get_child_pipe(pipe_index=self._pipe_index)
+                
+            #send the bytes down the pipe
+            self._pipe_conn.send(data_packet)
+            
+            
+#             datpkt = AT_SensorDataPacket.from_packet_bytes(pkt_bytes=data_packet)
+# #             self._rec_cnt += 1
+# #             if (self._rec_cnt >= 100):
+# # #                 self.log.log3(msg1='Handler ' + datpkt.sensor_id + ' received:', msg2=str(self._rec_cnt), msg3='recs', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+# #                 self._rec_cnt = 0
+#             
+#             #Enqueue and sort the data packet
+# #             self._time_slice_queue.enqueue(sensor_datpkt=datpkt, triangulations_psec=self.params.TRIANGULATIONS_PER_SECOND)
+#             self._time_slice_queue.enqueue(sensor_datpkt=datpkt)
+#             
+#             #attempt a pop if the time slice queue is ready
+#             itm = self._time_slice_queue.pop() #TSQueueItem
+#             while (itm != None):
+#                 self.server.trilat_queue.put(itm)
+#                 itm = self._time_slice_queue.pop() #TSQueueItem
+#             
+#             if (self.receive_rate > self.ERROR_RECEIVE_RATE):
+#                 time.sleep(self.ERROR_SLEEP_TIME)
+            
+            #Put in a slight delay so that a single process does not hog the queue
+#             time.sleep(self.POST_READ_SLEEP_TIME)
+#             time.sleep(self.POST_READ_SLEEP_TIME)
+        except Exception as ex:
+            self._log.log3(msg1="Exception:", msg2=str(ex), msg3='Type:' + type(ex).__name__, caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+            self._log.print_traceback(ex=ex, caller=self)
+            raise ex
+        return
+    
+    def handle_start(self, connection, address, *args):
+        '''
+        Called at the initial connection from a socket and before entering in a data receive loop. 
+        '''        
+        #Get instance of the time slice queue from the local mp manager
+#         self._get_time_slice_queue()
+        try:
+            self._worker_manager = self._get_worker_manager()
+#             self._pipe_pool = self._worker_manager.get_pipe_pool()
+#             self._pipe_index = self._pipe_pool.get_available_pool_index()
+        except Exception as ex:
+            self.log.log2(msg1='Could not get a pipe due to error:', msg2=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+            raise ex
+        return
+    
+    def handle_end(self, connection, address, *args):
+        '''
+        Called when the socket has disconnected and about to shut down.
+        '''
+        return
+    
+    def _get_worker_manager(self)->AT_DataProcWorkerMPManager:
+        if (self._worker_manager == None):
+            try:
+                #Get instance of the directory store from the manager
+                AT_DataProcWorkerMPManager.register_client_methods()
+                print("Data Proc Mgr Address: ", self.server.data_proc_manager_address, " Port: ", str(self.server.data_proc_manager_port))
+                manager =  AT_DataProcWorkerMPManager(address=(self.server.data_proc_manager_address, self.server.data_proc_manager_port), \
+                    authkey=bytearray(self._params.MANAGER_AUTH_KEY,'ascii'))
+                manager_connected = False
+                tries = 0
+                while ((not manager_connected) and (tries < 5)):
+                    try:
+                        manager.connect()
+                        manager_connected = True
+                    except Exception as exi:
+                        self.log.log2(msg1='Could not connect to the Worker Directory Server. Retrying...', msg2=str(exi), caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                        time.sleep(1)
+                        tries += 1
+                self._worker_manager = manager
+            except Exception as ex:
+                self.log.log2(msg1='Critical Exception opening data proc mgr to get time slice queue', msg2=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+                raise ex
+        return self._worker_manager
+    
+    
+    
+    

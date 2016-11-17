@@ -1,0 +1,17 @@
+'''
+Created on Nov 11, 2016
+
+@author: root
+'''
+
+class AT_StatusGUI(object):
+    '''
+    AeroTracker race status front-end consolidates the results from multiple data processors.
+    '''
+
+
+    def __init__(self, params):
+        '''
+        Constructor
+        '''
+        

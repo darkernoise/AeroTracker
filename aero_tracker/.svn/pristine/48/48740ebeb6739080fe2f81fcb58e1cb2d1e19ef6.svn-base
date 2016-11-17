@@ -1,0 +1,285 @@
+'''
+Created on May 23, 2016
+
+@author: Joel Blackthorne
+
+This module is extending the work by John Shovic at:
+
+https://github.com/switchdoclabs/iBeacon-Scanner-
+
+His work extends:
+
+iBeaconScanner based on https://github.com/adamf/BLE/blob/master/ble-scanner.py
+
+BLE scanner based on https://github.com/adamf/BLE/blob/master/ble-scanner.py
+BLE scanner, based on https://code.google.com/p/pybluez/source/browse/trunk/examples/advanced/inquiry-with-rssi.py
+
+https://github.com/pauloborges/bluez/blob/master/tools/hcitool.c for lescan
+https://kernel.googlesource.com/pub/scm/bluetooth/bluez/+/5.6/lib/hci.h for opcodes
+https://github.com/pauloborges/bluez/blob/master/lib/hci.c#L2782 for functions used by lescan
+
+# performs a simple device inquiry, and returns a list of ble advertisements 
+# discovered device
+
+Note: Be sure that /etc/bluetooth.main.conf has EnableGatt set to true
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+
+'''
+
+import sys
+import struct
+import bluetooth._bluetooth as bluez
+from bluetooth import _bluetooth
+from aero_tracker.ble.ble_packet import BLE_Packet
+from aero_tracker.target.tx_item import TX_Item
+from aero_tracker.network.mac_address import MacAddress
+
+class BLEScanner:
+    '''
+    classdocs
+    '''
+    
+    ##############################
+    # Constants
+    ##############################
+    DEBUG = False
+    
+    LE_META_EVENT = 0x3e
+    LE_PUBLIC_ADDRESS=0x00
+    LE_RANDOM_ADDRESS=0x01
+    LE_SET_SCAN_PARAMETERS_CP_SIZE=7
+    OGF_LE_CTL=0x08
+    OCF_LE_SET_SCAN_PARAMETERS=0x000B
+    OCF_LE_SET_SCAN_ENABLE=0x000C
+    OCF_LE_CREATE_CONN=0x000D
+
+    LE_ROLE_MASTER = 0x00
+    LE_ROLE_SLAVE = 0x01
+    
+    BLE_SCAN_ENABLE = 0x01
+    BLE_SCAN_DISABLE = 0x01
+
+    # these are actually subevents of LE_META_EVENT
+    EVT_LE_CONN_COMPLETE=0x01
+    EVT_LE_ADVERTISING_REPORT=0x02
+    EVT_LE_CONN_UPDATE_COMPLETE=0x03
+    EVT_LE_READ_REMOTE_USED_FEATURES_COMPLETE=0x04
+
+    # Advertisment event types
+    ADV_IND=0x00
+    ADV_DIRECT_IND=0x01
+    ADV_SCAN_IND=0x02
+    ADV_NONCONN_IND=0x03
+    ADV_SCAN_RSP=0x04
+    
+    ##############################
+    # Variables
+    ##############################
+    __device_number = 0x0
+    __socket = None
+    __old_filter = None
+    __TX_Power_AdvScanResp = -59
+    __TX_Power_AdvIndirect = -59
+    __packet_number = 0
+    __sensor_id = 0
+    
+    ##############################
+    # Public Methods
+    ##############################
+    '''
+    Gets events for open BLE scanner.
+    '''
+    def getEvents(self, sensor_id, num_events=20, tx_list=None):
+        returnedList = self.__parseEvents(sensor_id=sensor_id, num_events=num_events, tx_list=tx_list)
+        return returnedList
+    
+    ##############################
+    # Private Methods
+    ##############################
+    def __init__(self, sensor_id:str, device_number=0, defTXPower_AdvInd=0, defTXPower_AdvScanResp=0):
+        '''
+        Constructor which opens a bluez socket to the requrest device.
+        
+        Note: throws an exception if a socket is not available.
+        '''
+        self.__sensor_id = sensor_id
+        self.__device_number = device_number
+        self.__TX_Power_AdvIndirect = defTXPower_AdvInd
+        self.__TX_Power_AdvScanResp = defTXPower_AdvScanResp
+        if (self.__device_number == None):
+            self.__device_number = 0x0
+        #Open the bluez socket
+        self.__socket = bluez.hci_open_dev(self.__device_number)  # @UndefinedVariable
+        print("BLE socket open to device: %s" % self.__device_number)
+        try:
+            self.__hci_le_set_scan_parameters()
+            self.__hci_enable_le_scan()
+        except Exception as ex:
+            print("Could not open BLE socket on device: ", self.__device_number, " - ", ex)
+            raise
+        return
+    
+    def __del__(self):
+        print("Closing BLE socket on device: %s" % self.__device_number)
+        try:
+            self.__hci_disable_le_scan()
+        except _bluetooth.error as bleerr:  # @UndefinedVariable
+            print("Bluetooth BLE Error: ", bleerr.args)
+        except Exception as ex:
+            print("Exception Class: ", type(ex))
+            print("Bluetooth BLE Error: ", ex.args)
+            pass
+        try:
+            if (self.__socket != None):
+                self.__socket.close()
+                self.__socket = None
+        except:
+            print( "<p>Error: %s</p>" % sys.exc_info()[0] )
+            pass
+        return
+    
+    def __hci_le_set_scan_parameters(self):
+        self.__old_filter = self.__socket.getsockopt(bluez.SOL_HCI, bluez.HCI_FILTER, 14)  # @UndefinedVariable
+        
+    def __hci_enable_le_scan(self):
+        self.__hci_toggle_le_scan(self.BLE_SCAN_ENABLE)
+        return
+    
+    def __hci_disable_le_scan(self):
+        self.__hci_toggle_le_scan(self.BLE_SCAN_DISABLE)
+        return
+    
+    def __hci_toggle_le_scan(self, enable):
+        cmd_pkt = struct.pack("<BB", enable, 0x00)
+        bluez.hci_send_cmd(self.__socket, self.OGF_LE_CTL, self.OCF_LE_SET_SCAN_ENABLE, cmd_pkt)  # @UndefinedVariable
+    
+    def __printpacket(self, pkt):
+#         for c in pkt:
+#             sys.stdout.write("%02x " % struct.unpack("B",c)[0])
+        for i in range(len(pkt)):
+            sys.stdout.write("%02x " % struct.unpack("B",pkt[i:i+1])[0])
+        sys.stdout.write("\n")
+        return
+        
+    def __packed_bdaddr_to_string(self, bdaddr_packed):
+        return ':'.join('%02x'%i for i in struct.unpack("<BBBBBB", bdaddr_packed[::-1]))
+    
+    def __returnnumberpacket(self, pkt):
+        myInteger = 0
+        multiple = 256
+        for i in range(len(pkt)):
+            myInteger += struct.unpack("B",pkt[i:i+1])[0] * multiple
+        return myInteger
+
+    def __returnstringpacket(self, pkt):
+        myString = "";
+        for i in range(len(pkt)):
+            myString += "%02x" %struct.unpack("B",pkt[i:i+1])[0]
+        return myString
+    
+    def __bleInList(self, tx_list, mac_address, uuid, major, minor):
+        if (tx_list == None):
+            return True
+        return tx_list.inList(mac_address, uuid, major, minor)
+    
+    def __parseEvents(self, sensor_id, num_events, tx_list):
+        self.__old_filter = self.__socket.getsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, 14)  # @UndefinedVariable
+
+        # perform a device inquiry on bluetooth device
+        # The inquiry should last 8 * 1.28 = 10.24 seconds
+        # before the inquiry is performed, bluez should flush its cache of
+        # previously discovered devices
+        flt = bluez.hci_filter_new()  # @UndefinedVariable
+        bluez.hci_filter_all_events(flt)  # @UndefinedVariable
+        bluez.hci_filter_set_ptype(flt, bluez.HCI_EVENT_PKT)  # @UndefinedVariable
+        self.__socket.setsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, flt )  # @UndefinedVariable
+        done = False
+        results = []
+        udid = ""
+        mac_address = ""
+        major = 0
+        minor = 0
+        rssi = ""
+        txPower = ""
+        
+        for i in range(0, num_events):
+            pkt = self.__socket.recv(255)
+            ptype, event, plen = struct.unpack("BBB", pkt[:3])
+            #print "--------------" 
+            if event == bluez.EVT_INQUIRY_RESULT_WITH_RSSI:  # @UndefinedVariable
+                    i =0
+            elif event == bluez.EVT_NUM_COMP_PKTS:  # @UndefinedVariable
+                    i =0 
+            elif event == bluez.EVT_DISCONN_COMPLETE:  # @UndefinedVariable
+                    i =0 
+            elif event == self.LE_META_EVENT:
+#                 subevent, = struct.unpack("B", pkt[3])
+                subevent, = struct.unpack("B", pkt[3:4])
+                pkt = pkt[4:]
+                if subevent == self.EVT_LE_CONN_COMPLETE:
+                    le_handle_connection_complete(pkt)  # @UndefinedVariable
+                elif subevent == self.EVT_LE_ADVERTISING_REPORT:
+                    num_reports = struct.unpack("B", pkt[0:1])[0]
+                    report_pkt_offset = 0
+                    for i in range(0, num_reports):
+#                         self.__printpacket(pkt)
+                        rptPktLen = int(len(pkt) / num_reports)
+                        advertType = struct.unpack("B", pkt[1:2])[0]
+                        mac_address = MacAddress.unformat_mac_address(self.__packed_bdaddr_to_string(pkt[report_pkt_offset + 3:report_pkt_offset + 9]))
+                        udid = self.__returnstringpacket(pkt[rptPktLen -22: rptPktLen - 6])
+                        major = self.__returnnumberpacket(pkt[rptPktLen -6: rptPktLen - 4])
+                        minor = self.__returnnumberpacket(pkt[rptPktLen -4: rptPktLen - 2]) 
+                        if (self.__bleInList(tx_list=tx_list, mac_address=mac_address, uuid=udid, major=major, minor=minor)):
+                            rssi = struct.unpack("b", pkt[rptPktLen -1:rptPktLen])
+                            txPower = struct.unpack("b", pkt[rptPktLen -2:rptPktLen -1])
+                            #TODO: Not getting transmit power back
+                            if (isinstance(txPower, tuple)):
+                                txPower = txPower[0]
+                            if ((txPower == 0) or (txPower == -1)):
+                                if (advertType == self.ADV_SCAN_RSP):
+                                    txPower = self.__TX_Power_AdvScanResp
+                                else:
+                                    txPower = self.__TX_Power_AdvIndirect
+
+                            self.__packet_number += 1
+                            blePkt = BLE_Packet(
+                                mac_address,
+                                udid,
+                                major,
+                                minor,
+                                rssi,
+                                txPower,
+                                advertType,
+                                self.__packet_number,
+                                sensor_id)
+                            results.append(blePkt)
+                            report_pkt_offset += rptPktLen
+                    done = True
+            else:
+                #Unknown even type
+#                 print("Uknown ble event: ", str(event))
+                pass
+        self.__socket.setsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, self.__old_filter )  # @UndefinedVariable
+        return results
+    
+    def __process_event(self):
+        
+        
+        return
+    
+    

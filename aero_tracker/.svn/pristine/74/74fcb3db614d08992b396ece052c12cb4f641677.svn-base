@@ -1,0 +1,74 @@
+'''
+Created on Nov 11, 2016
+
+@author: Joel Blackthorne
+'''
+
+# import os
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+import matplotlib.pyplot as plt
+
+#Possibly this rendering backend is broken currently
+#from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
+from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo as FigureCanvas
+
+
+from matplotlib.figure import Figure
+
+from aero_tracker.gui.at_gui_base import AT_GUI_Base
+
+class AT_StatusGUI(AT_GUI_Base):
+    '''
+    AeroTracker race status front-end consolidates the results from multiple data processors.
+    '''
+    GLADE_FILE = 'at_status_window.glade'
+    WINDOW_ID = 'window_at_status'
+    
+    _status_bar = None
+    _status_bar_context = None
+    _log_view = None
+    _graph_canvas = FigureCanvas
+    
+    def on_window_show(self, *args):
+        '''
+        Standard event handler for main window delete.
+        '''
+        self._set_status_bar(status_text="Welcome to AeroTracker status client!")
+        return
+
+    def __init__(self):
+        '''
+        Constructor
+        '''
+        super().__init__(window_id=self.WINDOW_ID, glade_file=self.GLADE_FILE)
+        self._add_graphing_plots()
+        self._init_log_view()
+        return
+    
+    def _set_status_bar(self, status_text):
+        if (self._status_bar == None):
+            self._status_bar = self.glade_bldr.get_object('statusbar1')
+        self._status_bar_context = self._status_bar.get_context_id("status")
+        self._status_bar.push(self._status_bar_context,status_text)
+        return
+    
+    def _add_graphing_plots(self):
+        #box_info
+        fig = Figure(figsize=(6, 4))
+        self._graph_canvas = FigureCanvas(fig)  # a gtk.DrawingArea
+        self._graph_canvas.set_size_request(400,400)
+        window_graph = self.get_gui_object('scrolledwindow_graph')
+        window_graph.add_with_viewport(self._graph_canvas)
+        return
+    
+    def _init_log_view(self):
+        #textview_raw_data
+        self._log_view = self.get_gui_object('textview_raw_data')
+        self._log_view.set_size_request(300,400)
+        return
+    
+#Main application
+obj = AT_StatusGUI()
+Gtk.main()

@@ -1,0 +1,100 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+from aero_tracker.network.at_protocol import AT_Protocol
+from typing import List
+
+class AT_SensorDataPacket(object):
+    '''
+    Packet of data sent from a sensor cluster to a data processing server
+    '''
+    cluster_id = ""
+    sensor_id = ""
+    target_id = ""
+    filter_dist = 0.0, 
+    raw_dist = 0.0 
+    rssi = 0
+    timestamp = 0.0
+    
+    @staticmethod
+    def average_data_pkts(data_pkts): #List(AT_SensorDataPacket)):
+        amt = 0.0
+        cnt = 0
+        rval = 0.0
+        for dpkt in data_pkts:
+            amt += dpkt.filter_dist
+            cnt += 1
+        
+        if (cnt > 0):
+            rval = amt / cnt
+
+        return rval
+    
+    @staticmethod
+    def from_packet_bytes(pkt_bytes:bytes):
+        '''
+        Create an instance of this object from packet bytes.  
+        
+        Note: pkt_bytes should not include the data terminator or Line Break.
+        '''
+        byt = (pkt_bytes[0:len(pkt_bytes)-2])
+        str_val = byt.decode('ascii')
+        fields = str_val.split(AT_Protocol.DATA_DELIMITIER)
+        return AT_SensorDataPacket(cluster_id=fields[0], \
+            sensor_id=fields[1], \
+            target_id=fields[2], \
+            filter_dist=float(fields[3]), \
+            raw_dist=float(fields[4]), \
+            rssi=int(fields[5]), \
+            timestamp=float(fields[6]))
+    
+    def get_packet_bytes(self):
+        return str.encode( \
+            self.cluster_id + \
+            AT_Protocol.DATA_DELIMITIER + \
+            self.sensor_id + \
+            AT_Protocol.DATA_DELIMITIER + \
+            self.target_id + \
+            AT_Protocol.DATA_DELIMITIER + \
+            str(self.filter_dist) + \
+            AT_Protocol.DATA_DELIMITIER + \
+            str(self.raw_dist) + \
+            AT_Protocol.DATA_DELIMITIER + \
+            str(self.rssi) + \
+            AT_Protocol.DATA_DELIMITIER + \
+            str(self.timestamp) + \
+            AT_Protocol.DATA_TERMINATOR + \
+            AT_Protocol.LINE_BREAK)
+
+    def __init__(self, cluster_id, sensor_id, target_id, filter_dist, raw_dist, rssi, timestamp):
+        '''
+        Constructor
+        '''
+        self.cluster_id = cluster_id
+        self.sensor_id = sensor_id
+        self.target_id = target_id
+        self.filter_dist = filter_dist
+        self.raw_dist = raw_dist
+        self.rssi = rssi
+        self.timestamp = timestamp
+        return
+    

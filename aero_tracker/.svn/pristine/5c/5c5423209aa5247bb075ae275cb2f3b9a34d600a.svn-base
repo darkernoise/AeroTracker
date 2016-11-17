@@ -1,0 +1,136 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import threading
+from aero_tracker.exception.at_exception import AT_Exception
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_ThreadedBase(threading.Thread):
+    '''
+    Standard base for AT threaded classes.
+    '''
+    
+    @property
+    def is_running(self):
+        return self._run
+    
+    @property
+    def log(self):
+        return self._log
+    
+    @property
+    def params(self):
+        return self._params
+    
+    @property
+    def thread_name(self):
+        #TODO
+        return 'Thread'
+    
+    @property
+    def thread_lock(self):
+        return self._lock
+    
+    ##############################
+    # Variables
+    ##############################
+    _run = False
+    _params = None
+    _log = None
+    _lock = None
+    
+    ##############################
+    # Public Methods
+    ##############################
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        raise AT_Exception(source=self, method='run', message='AT_ThreadedBase.run_clycle must be redefined')
+        return
+    
+    def before_run(self):
+        '''
+        Executes before the run cycle starts.
+        '''
+        
+        return
+    
+    def exception_handler(self, ex):
+        '''
+        Called when an exception is thrown in the main loop.  By default the exception is trapped unless this 
+        method throws it.
+        '''
+        return
+    
+    def finally_hander(self):
+        '''
+        Executed in a finally block in the exception handler.
+        '''
+        return
+    
+    def run(self):
+        self.log.log2(msg1=self.thread_name, msg2='started:', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)  
+        self.before_run() 
+        while (self._run):
+            try:
+                self.run_clycle()
+            except Exception as ex:
+                self.log.log3(msg1=self.thread_name, msg2='exception:', msg3=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                self.log.print_traceback(ex=ex, caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+                self.exception_handler(ex)
+            finally:
+                self.finally_hander()
+        self.log.log2(msg1=self.thread_name, msg2='ended:', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+        return 
+    
+    def start(self):
+        if (not self._run):
+            self._run = True
+            self.log.log2(msg1=self.thread_name, msg2='start requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+            super().start()
+        return
+    
+    #Server stop signaled
+    def stop(self):
+        self._run = False;
+        self.log.log2(msg1=self.thread_name, msg2='stop requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+        self.cleanUp()
+        return
+    
+    def cleanUp(self):
+        if (self.log != None):
+            self.log.log2(msg1=self.thread_name, msg2='cleaning up program resources', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+        else:
+            print(self.daemon_name, 'Cleaning up program resources')
+        return
+    
+    def __init__(self, params, log_file):
+        super().__init__()
+        self._params = params
+        self._log = AT_Logging(params=self._params,log_file=log_file)
+        self._lock = threading.RLock()
+        return
+    
+    def __del__(self):
+        self.cleanUp()
+        return

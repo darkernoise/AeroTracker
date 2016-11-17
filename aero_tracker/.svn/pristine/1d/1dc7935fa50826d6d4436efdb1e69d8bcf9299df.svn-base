@@ -1,0 +1,198 @@
+'''
+Created on Aug 18, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+import time
+import socket
+import multiprocessing as mp
+from aero_tracker.server.data_proc.at_data_proc_socket_server import AT_DataProcSocketServer
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.server.data_proc.at_data_proc_worker_handler import AT_DataProcWorkerHandler
+from aero_tracker.common.at_process_base import AT_ProcessBase
+from aero_tracker.network.at_data_proc_address import AT_DataProcAddress
+from aero_tracker.network.at_protocol import AT_Protocol
+# from aero_tracker.server.data_proc.at_data_proc_worker_mp_manager import AT_DataProcWorkerMPManager
+from aero_tracker.server.data_proc.at_data_proc_worker_mp_manager_server import AT_DataProcMPManagerServer
+from aero_tracker.trilateration.at_trilateration_worker import AT_TrilaterationWorker
+from aero_tracker.network.at_pipe_pool import AT_PipePool
+# from aero_tracker.server.data_proc.at_data_sorter import AT_DataSorter
+
+class AT_DataProcServerWorker(AT_ProcessBase):
+    '''
+    Data Processing worker process.  Each worker contacts the directory server and registers. Then, the server
+    opens ports and waits for incoming connections from sensor servers sending raw data.  Finally, the worker
+    process gets a list of all data listeners and sends then the final data.
+    
+    A AT_DataProcServerWorker can track a single Target.  The Directory Server will dynamically assign a 
+    target to an instance of this class.  Though, assignment of a target happpens after this data processing
+    worker has already registered.  Thus, this object can only determine its target after it starts to 
+    receive data.
+    '''
+    MAX_INCOMING_CONNECTIONS = 20
+    MAX_TRILAT_QUEUE_SIZE = 500
+    LOG_FILE = '/var/log/aerotracker/at_data_proc_'
+    
+    
+    _dir_store = None
+    _local_address = ''
+    _socket_srvr = None
+#     _data_sorter = AT_DataSorter
+    _trilat_queue = None #multiprocessing Queue object
+    _trilat_worker = None #type AT_TrilaterationWorker
+    _worker_num = 0
+    _log_file = '/var/log/aerotracker/at.log'
+    _pipe_pool = AT_PipePool
+    
+    _data_proc_manager_address = ""
+    _data_proc_manager_port = 0
+    _data_proc_worker_manager = None #Data Processing Worker local memory manager for multiprocess sharing
+    
+    @property
+    def host_address(self):
+        '''
+        Connects to the directory server to see which local network
+        interface was able to complete the connection.
+        '''
+        if (self._local_address == ''):
+            self._local_address = self._get_local_interface_address()
+        return self._local_address
+    
+    
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        #Open port to listen for sensor data
+        port = self._open_listening_port(server_address=self.host_address)
+        srvr = AT_DataProcAddress(display_name=self._params.PROC_SERVER_NAME, address=self.host_address, port=port)
+        
+        #Contact the remote directory server and register
+        self._dir_store.add_data_processing_server(srvr)
+        self.log.log3(msg1=self._params.PROC_SERVER_NAME, msg2='listening at address:', msg3=srvr.full_address, caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        self._print_list_data_proc_srvrs()
+        
+        if (self.is_running):
+            #Serve and listen for incoming connections
+            self._socket_srvr.serve_forever()
+        self.stop()
+        return
+    
+    def start(self):
+        super().start()
+        return
+
+    def stop(self):
+        super().stop()
+        if (self._socket_srvr != None):
+            self._socket_srvr.server_close()
+        return
+    
+    def _print_list_data_proc_srvrs(self):
+        proc_srvrs = self._dir_store.get_data_proc_srvrs()
+        self.log.log2(msg1='Num Data Proc Srvrs:', msg2=str(len(proc_srvrs)), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        for proc_addr in proc_srvrs:
+            self.log.log2(msg1='Proc Srvr:', msg2=proc_addr.address + ':' + str(proc_addr.port), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        return
+    
+    def _open_listening_port(self, server_address):
+        #Start up a local multiprocessing manager server for use by the incoming sockets 
+        #to this data processing worker.  This has to be started before the socket listeners
+        #in oder to get thh generated address and port
+        self._init_data_proc_worker_manager()
+        self._init_trilateration()
+        
+        connected = False
+        tries = 0
+        data_port = self._params.port #port to start trying at
+        while ((not connected) and (tries < 10)):
+            try:
+                self._socket_srvr = AT_DataProcSocketServer((self._dir_store), 
+                        server_address=(server_address, data_port),
+                        RequestHandlerClass=AT_DataProcWorkerHandler,
+                        params=self._params,
+                        terminator=AT_Protocol.DATA_TERMINATOR)
+                self._socket_srvr.trilat_queue = self._trilat_queue
+                self._socket_srvr.data_proc_manager_address = self._data_proc_manager_address
+                self._socket_srvr.data_proc_manager_port = self._data_proc_manager_port
+                self._socket_srvr.log_file = self._log_file
+                self._socket_srvr.pipe_pool = self._pipe_pool
+#                 self._data_sorter.manager_address = self._socket_srvr.data_proc_manager_address
+#                 self._data_sorter.manager_port = self._socket_srvr.data_proc_manager_port
+                connected = True
+            except Exception as ex:
+                tries += 1
+                data_port += 1
+                time.sleep(0.5)
+                
+        if (connected):
+            self._client_data_port = data_port
+        else:
+            data_port = 0
+        return data_port
+    
+    def _init_data_proc_worker_manager(self):
+        '''
+        Initialize the worker specific multiprocess shared memory manager.
+        '''
+        self._data_proc_worker_manager = AT_DataProcMPManagerServer(self.params, pipe_pool=self._pipe_pool)
+        self._data_proc_worker_manager.start()
+        self._data_proc_manager_address = self._data_proc_worker_manager.manager_address
+        self._data_proc_manager_port = self._data_proc_worker_manager.manager_port
+        return
+    
+    def _init_trilateration(self):
+        #Create Multiprocessing Queue object
+        self._trilat_worker = AT_TrilaterationWorker(dir_store=self._dir_store,
+            trilat_queue=self._trilat_queue, 
+            params=self.params)
+        self._trilat_worker.start()
+        return
+
+
+    def __init__(self, dir_store, params, worker_num):
+        '''
+        Constructor
+        '''
+        self._worker_num = worker_num
+        self._log_file = self.LOG_FILE + str(worker_num)
+        super().__init__(params=params, log_file=self._log_file)
+        self.daemon = False
+        self._dir_store = dir_store #Directory Store Proxy
+        self._trilat_queue = mp.Queue(maxsize=self.MAX_TRILAT_QUEUE_SIZE)
+#         data_sorter_log_file = '/var/log/aerotracker/at_data_sorter_' + str(worker_num)
+#         self._data_sorter = AT_DataSorter(trilat_queue=self._trilat_queue, params=params, log_file=data_sorter_log_file)
+        #start the data sorter
+#         self._data_sorter.start()
+#         self._pipe_pool = self._data_sorter.pipe_pool
+        
+        return
+    
+    def _get_local_interface_address(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect((self._params.server_name,self._params.port))
+            addr = s.getsockname()[0]
+            s.close()
+        except Exception as ex:
+            self.log.log2(msg1='Could not connect to directory server:', msg2=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_ERROR)
+            raise ex
+        return addr
+    
+    

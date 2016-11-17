@@ -1,0 +1,173 @@
+'''
+Created on May 30, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import typing
+from aero_tracker.params.at_parameters import ATParameters
+from aero_tracker.ble.device_info import DeviceInfo
+from aero_tracker.sensor.sensor_device import SensorDevice
+
+class ATSensorClusterParams(ATParameters):
+    '''
+    classdocs
+    '''
+
+    sensor_cluster_id = ""
+    num_sensors = 0
+    tx_power_adv_ind = -59
+    tx_power_adv_scan_rsp = -59
+    change_tracking = False
+    sensor_base = None
+    _active_sensors = []
+    sensorA = None
+    sensorB = None
+    sensorC = None
+    sensorD = None
+    sensorE = None
+    manager_auth_key = "password"
+    samples_per_sec = 40
+    time_slice_queue_buffer_size = 30
+    time_slices_per_sec = 40
+    
+    #Private values to hold raw param
+    _sensor_base = []
+    _sensorA = []
+    _sensorB = []
+    _sensorC = []
+    _sensorD = []
+    _sensorE = []
+    
+    @property
+    def active_sensors(self):
+        return self._active_sensors
+    
+    def get_sensor_by_index(self, index) -> SensorDevice:
+        return self._active_sensors[index]
+    
+    def get_sensor_by_id(self, sensor_id:str)->SensorDevice:
+        for snsr in self._active_sensors:
+            if (snsr.sensor_id == sensor_id):
+                return snsr
+        return None
+
+    def set_param_value(self, paramName, paramValue):
+        super().set_param_value(paramName, paramValue)
+        if (paramName == "SENSOR_CLUSTER_ID"):
+            self.sensor_cluster_id = paramValue
+        elif (paramName == "NUM_SENSORS"):
+            self.num_sensors = int(paramValue)
+        elif (paramName == "TX_POWER_ADV_IND"):
+            self.tx_power_adv_ind = int(paramValue)
+        elif (paramName == "TX_POWER_ADV_SCAN_RSP"):
+            self.tx_power_adv_scan_rsp = int(paramValue)
+        elif (paramName == "CHANGE_TRACKING"):
+            if ((paramValue == "On") or (paramValue == "on") or (paramValue == "True")):
+                self.change_tracking = True
+            else:
+                self.change_tracking = False
+        elif (paramName == "SENSOR_BASE"):
+            self._sensor_base = self.param_value_to_array(paramValue)
+        elif (paramName == "SENSOR_A"):
+            self._sensorA = self.param_value_to_array(paramValue)
+        elif (paramName == "SENSOR_B"):
+            self._sensorB = self.param_value_to_array(paramValue)
+        elif (paramName == "SENSOR_C"):
+            self._sensorC = self.param_value_to_array(paramValue)
+        elif (paramName == "SENSOR_D"):
+            self._sensorD = self.param_value_to_array(paramValue)
+        elif (paramName == "SENSOR_E"):
+            self._sensorE = self.param_value_to_array(paramValue)
+        elif (paramName == "MANAGER_AUTH_KEY"):
+            self.manager_auth_key = paramValue
+        elif (paramName == "SAMPLES_PER_SEC"):
+            self.samples_per_sec = int(paramValue)
+        elif (paramName == "TIME_SLICE_QUEUE_BUFFER_SIZE"):
+            self.time_slice_queue_buffer_size = int(paramValue)
+        elif (paramName == "TIME_SLICES_PER_SEC"):
+            self.time_slices_per_sec = int(paramValue)
+        return
+    
+    def __init__(self, param_file):
+        super().__init__(param_file)
+#         super(ATSensorClusterParams, self).__init__(param_file)
+        #get all devices
+        self._setup_sensors()
+        return
+    
+    def _get_sensor_id(self, cluster_id, sensor_id)->str:
+        return cluster_id + "_" + sensor_id
+    
+    def _setup_sensors(self):
+        try:
+            num_devices = 0
+            self._active_sensors = []
+            devInfo = DeviceInfo(params=self, debug_level=self.debug_level)
+            self.sensor_base = devInfo.get_device_by_address(mac_address=self._sensor_base[1])
+            if (self.sensor_base == None):
+                raise Exception('Sensor BASE cannot be located by Mac Address.  Please correct and restart')
+            self.sensor_base.cluster_id = self.sensor_cluster_id
+            self.sensor_base.sensor_id = self._get_sensor_id(cluster_id=self.sensor_cluster_id, sensor_id=self._sensor_base[0])
+            self._active_sensors.append(self.sensor_base)
+            num_devices += 1
+            self.sensorA = devInfo.get_device_by_address(mac_address=self._sensorA[1])
+            if (self.sensorA != None):
+                self._setup_sensor(sensor=self.sensorA, param_list=self._sensorA)
+                num_devices += 1
+            self.sensorB = devInfo.get_device_by_address(mac_address=self._sensorB[1])
+            if (self.sensorB != None):
+                self._setup_sensor(sensor=self.sensorB, param_list=self._sensorB)
+                num_devices += 1
+            self.sensorC = devInfo.get_device_by_address(mac_address=self._sensorC[1])
+            if (self.sensorC != None):
+                self._setup_sensor(sensor=self.sensorC, param_list=self._sensorC)
+                num_devices += 1
+            self.sensorD = devInfo.get_device_by_address(mac_address=self._sensorD[1])
+            if (self.sensorD != None):
+                self._setup_sensor(sensor=self.sensorD, param_list=self._sensorD)
+                num_devices += 1
+            if (len(self._sensorE) > 0):
+                self.sensorE = devInfo.get_device_by_address(mac_address=self._sensorE[1])
+                if (self.sensorE != None):
+                    self._setup_sensor(sensor=self.sensorE, param_list=self._sensorE)
+                    num_devices += 1
+                
+            if (num_devices != devInfo.get_num_devices()):
+                print('Expecting:', str(devInfo.get_num_devices()),'but found:', str(num_devices))
+                msg = "Invalid Parameters file.  Sensor Mac Addresses do not match system devices"
+                print(msg)
+                raise Exception(msg)
+            else:
+                self.num_sensors = num_devices
+            
+        except Exception as ex:
+            print("Parameter file exception in sensor or base section: ", ex)
+            raise ex
+        return
+        
+    def _setup_sensor(self, sensor, param_list):
+        sensor.cluster_id = self.sensor_cluster_id
+        sensor.sensor_id = self._get_sensor_id(cluster_id=self.sensor_cluster_id, sensor_id=param_list[0])
+        sensor.degrees_turned = int(param_list[2])
+        sensor.distance_from_base = int(param_list[3])
+        sensor.height_from_ground = int(param_list[4])
+        self._active_sensors.append(sensor)
+        return
+        

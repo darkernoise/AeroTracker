@@ -1,0 +1,257 @@
+'''
+Created on Sep 19, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+import os
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.cm
+import matplotlib.animation as animation
+import mpl_toolkits.mplot3d.axes3d as p3
+matplotlib.use('TKAgg')
+
+import traceback
+from aero_tracker.client.at_result_data_queue import AT_ResultDataQueue
+
+# import time
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.animation as animation
+# import mpl_toolkits.mplot3d.axes3d as p3
+# from aero_tracker.client.result_listener_base import ResultListenerBase
+# from aero_tracker.client.at_graphing_gui_handler import AT_GraphingGUIHander
+from aero_tracker.params.at_result_listener_params import AT_ResultListenerParams
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_GraphingGUI(object):
+    '''
+    Graphs the flight path in real time.
+    
+    Note: Run from the command line: python3.5 -m aero_tracker.gui.at_graphing_gui
+    '''
+    
+    CONF_DIR = 'conf'
+    LOG_DIR = 'log'
+    
+    CONF_FILE_NAME = 'at_gui.conf'
+    GUI_NAME = 'AeroTracker Flight Path'
+    LOG_FILE_NAME = 'at_graph.log'
+    RESULT_LOG_FILE_NAME = 'at_graph_results.log'
+    
+    _params = None
+    _log = AT_Logging
+    __rslt_data_queue = None
+    _graph_figure = None
+    _graph_axis = None
+    _flight_path = None
+    _annimation = None
+    _colors = None
+    _background = None
+    _use_blit = False
+    
+    @property
+    def log_file(self):
+        rval = os.path.normpath(AT_GraphingGUI.get_base_dir() + os.sep + self.LOG_DIR + os.sep + self.LOG_FILE_NAME)
+        print('Using log file: ', rval)
+        return rval
+    
+    @property
+    def result_log_file(self):
+        rval = os.path.normpath(AT_GraphingGUI.get_base_dir() + os.sep + self.LOG_DIR + os.sep + self.RESULT_LOG_FILE_NAME)
+        print('Using log file: ', rval)
+        return rval
+    
+    @property
+    def conf_file(self):
+        rval = os.path.normpath(AT_GraphingGUI.get_base_dir() + os.sep + self.CONF_DIR + os.sep + self.CONF_FILE_NAME)
+        return rval
+    
+    @staticmethod
+    def get_conf_file():
+        rval = os.path.normpath(AT_GraphingGUI.get_base_dir() + os.sep + AT_GraphingGUI.CONF_DIR + os.sep + AT_GraphingGUI.CONF_FILE_NAME)
+        print('Using conf file: ', rval)
+        return rval
+    
+    @staticmethod
+    def get_base_dir():
+        rval = os.getcwd()
+        if (rval.endswith('gui')):
+            rval = rval[:-17]
+        return rval
+    
+    def on_data_handler(self, sender, **kwargs):
+        '''
+        target_id = kwargs['target_id']
+        target_index = kwargs['target_index']
+        '''
+#         target_id = kwargs['target_id']
+#         target_index = kwargs['target_index']
+#         self._log.log2(msg1='Data Arrived for target:', msg2=str(target_id), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        return
+    
+    def on_cut_handler(self, sender, **kwargs):
+        '''
+        target_id
+        target_index
+        num_cuts
+        '''
+        print('Cut - Target: ' + kwargs['target_id'])
+        return
+    
+    def on_turn_apex_handler(self, sender, **kwargs):
+        '''
+        target_id
+        target_index
+        lap_number
+        turn_apex
+        '''
+        trn_apex = kwargs['turn_apex']
+        
+#         print('Turn Apex = ' + "%.2f" % float(kwargs['turn_apex']) + \
+#             ' lap #: ' + kwargs['lap_number'] + \
+#             ' target: '+ kwargs['target_id'])
+        print('Turn Apex = ' + "%.2f" % (trn_apex[2]) + \
+            ' lap #: ' + str(kwargs['lap_number']) + \
+            ' target: '+ kwargs['target_id'])
+        return
+    
+    def init_flight_path(self):
+        self._flight_path, = self._graph_axis.plot([0.0,0.1], [0.0,0.1], [0.0,0.1], linewidth=2.0, color='b')
+        return self._flight_path,
+    
+    def update_flight_path(self, num):
+        '''
+        Updates the animated flight path curve.  This is called by the graph is real-time 
+        to get a data point for a specific interval number.
+        '''
+        try:
+            gx = self.__rslt_data_queue.graph_x(target_index=0)
+            gy = self.__rslt_data_queue.graph_y(target_index=0)
+            gz = self.__rslt_data_queue.graph_z(target_index=0)
+        except Exception as ex:
+            return self._flight_path
+        
+        self._flight_path.set_data(gx, gy)
+        self._flight_path.set_3d_properties(gz)
+        
+#         self._flight_path.set_data(self._lap_x, self._lap_y)
+#         self._flight_path.set_3d_properties(self._lap_z)
+        #redraw 
+        try:
+            if (self._use_blit):
+                self._graph_figure.canvas.restore_region(self._background)
+                self._graph_axis.draw_artist(self._flight_path)
+                self._graph_figure.canvas.blit(self._graph_axis.bbox)
+            else:
+                plt.draw()
+        except Exception as ex:
+            print(ex)
+            raise ex
+         
+        return self._flight_path,
+    
+    def _plot_pole(self):
+        '''
+        Plots the pole on the graph.
+        '''
+        x = np.linspace(0, 0, 2)
+        y = np.linspace(0, 0, 2)
+        z = np.linspace(0, 50, 2)
+        self._graph_axis.plot(x,y,z,label='Pole',linewidth=3.0, color='r')
+        return
+    
+    def cleanUp(self):
+        if (self.__rslt_data_queue != None):
+            self.__rslt_data_queue.stop()
+        return
+    
+    def __init__(self, params):
+        self._params = params
+        self._log = AT_Logging(params=self._params, log_file=self.log_file)
+        self.__rslt_data_queue = AT_ResultDataQueue(self._params, self.GUI_NAME,log_file=self.result_log_file)
+        #Set even handlers
+        self._log.log2(msg1='Registering event handlers', msg2='', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        self.__rslt_data_queue.on_data.register(self.on_data_handler)
+        self.__rslt_data_queue.on_turn_apex.register(self.on_turn_apex_handler)
+        self.__rslt_data_queue.on_cut.register(self.on_cut_handler)
+        self.__rslt_data_queue.start()
+        self._init_new_graph()
+        #Save the background buffer
+        self._background = self._graph_figure.canvas.copy_from_bbox(self._graph_axis.bbox)
+        self._log.log2(msg1='Fully started', msg2='', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        return
+    
+    def __del__(self):
+        self.cleanUp()
+        return
+    
+    def _init_new_graph(self):
+        '''
+        Executes before the run cycle starts.
+        '''
+        self._log.log2(msg1='Creating new graph', msg2='', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        self._graph_figure = plt.figure()
+#         self._graph_axis = self._graph_figure.add_subplot(1,1,1)
+#         self._graph_axis = p3.Axes3D(self._graph_figure)
+        self._graph_axis = self._graph_figure.gca(projection='3d')
+        
+        # Setting the axes properties
+        self._graph_axis.set_xlim3d([-100.0, 100.0])
+        self._graph_axis.set_xlabel('X')
+        
+        self._graph_axis.set_ylim3d([-100.0, 100.0])
+        self._graph_axis.set_ylabel('Y')
+        
+        self._graph_axis.set_zlim3d([0.0, 100.0])
+        self._graph_axis.set_zlabel('Z')
+        
+        self._graph_axis.set_title('3D Flight Path')
+        num_colors = 3
+        self._colors = iter(plt.cm.rainbow(np.linspace(0,1,num_colors)))
+#         self._colors = iter(matplotlib.cm.rainbow(np.linspace(0,1,num_colors)))
+        
+        #Draw the pole
+        self._plot_pole()
+        
+        self._annimation = animation.FuncAnimation(self._graph_figure, 
+            self.update_flight_path, 
+            frames=200, 
+            init_func=self.init_flight_path,
+            interval=20, 
+            blit=self._use_blit)
+
+#         plt.draw()        
+        plt.show(block=False)
+        return
+    
+
+#Main Program
+try:
+    params = AT_ResultListenerParams(AT_GraphingGUI.get_conf_file())
+    obj = AT_GraphingGUI(params)
+    while (True):
+        plt.pause(0.05)
+        time.sleep(0.1)
+except Exception as ex:
+    traceback.print_tb(ex)
+
+print(obj.GUI_NAME, ' exiting')
+        

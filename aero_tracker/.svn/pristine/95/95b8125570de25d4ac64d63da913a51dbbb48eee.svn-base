@@ -1,0 +1,377 @@
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 44 14 - Lvl: 1 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/gui/sound/at_audio.py, line 31 in run_clycle>
+16-11-11 16 44 14 - Lvl: 2 <FrameSummary file /usr/lib/python3.5/queue.py, line 161 in get>
+16-11-11 16 44 14 - Thread exception: 
+16-11-11 16 44 14 - Lvl: 0 <FrameSummary file /home/midian/source_code/aerotracker/aero_tracker/common/at_threaded_base.py, line 96 in run>
+16-11-11 16 46 10 - Thread start requested
+MainThread:16-11-11 16 46 10 - Thread start requested
+16-11-11 16 46 10 - Thread started:
+Thread-2:16-11-11 16 46 10 - Thread started:
+16-11-11 16 46 59 - Thread start requested
+MainThread:16-11-11 16 46 59 - Thread start requested
+16-11-11 16 46 59 - Thread started:
+Thread-2:16-11-11 16 46 59 - Thread started:
+16-11-11 16 49 20 - Thread start requested
+MainThread:16-11-11 16 49 20 - Thread start requested
+16-11-11 16 49 20 - Thread started:
+Thread-6:16-11-11 16 49 20 - Thread started:
+16-11-11 16 49 42 - Thread start requested
+MainThread:16-11-11 16 49 42 - Thread start requested
+16-11-11 16 49 42 - Thread started:
+Thread-6:16-11-11 16 49 42 - Thread started:
+16-11-11 16 50 11 - Thread start requested
+MainThread:16-11-11 16 50 11 - Thread start requested
+16-11-11 16 50 11 - Thread started:
+Thread-6:16-11-11 16 50 11 - Thread started:
+16-11-11 16 51 44 - Thread start requested
+MainThread:16-11-11 16 51 44 - Thread start requested
+16-11-11 16 51 44 - Thread started:
+Thread-6:16-11-11 16 51 44 - Thread started:
+MainThread:16-11-11 17 01 05 - Thread start requested
+Thread-2:16-11-11 17 01 05 - Thread started:

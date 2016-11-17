@@ -1,0 +1,145 @@
+'''
+Created on Aug 19, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+import typing
+# from aero_tracker.network.at_sensor_data_packet import AT_SensorDataPacket
+from aero_tracker.trilateration.time_slice import TimeSlice
+# from aero_tracker.trilateration.raw_data.ts_queue_item import *
+
+class TSQueueItemSensor(object):
+    '''
+    Class for sorting
+    '''
+    sensor_id = ""
+    data_pkts = None
+    
+    #data_pkt:AT_SensorDataPacket
+    def __init__(self, sensor_id:str, data_pkt):
+        self.sensor_id = sensor_id
+        self.data_pkts = []
+        self.data_pkts.append(data_pkt)
+        return
+    
+    def __str__(self):
+        return self.sensor_id + ' ' + str(self.data_pkts)
+
+class TSQueueItem(object):
+    '''
+    Class for sorting by time slice.
+    '''
+    @staticmethod
+    def merge_queue_items(q_old, q_new):
+        
+        if (q_new == None):
+            return q_old
+        elif (q_old == None):
+            return q_new
+        
+        for new_snsr in q_new.sensors:
+            #see if this sensors is in the old q
+            s_fnd = False
+            for old_snsr in q_old.sensors:
+                if (new_snsr.sensor_id == old_snsr.sensor_id):
+                    s_fnd = True
+                    #append the new values to the old sensor
+                    for new_dpkt in new_snsr.data_pkts:
+                        old_snsr.data_pkts.append(new_dpkt)
+                    exit
+            if (not s_fnd):
+                #the sensor does not exist in the seed_value
+                q_old.sensors.append(new_snsr)
+        
+        return q_old
+    
+    @property
+    def sort_key(self):
+        if (self.time_slice != None):
+            return self.time_slice.sort_key
+        return None
+    
+    time_slice = None
+    sensors = [] #array of TSQueueItemSensor
+    
+    def sort_by_sensor_id(self):
+        sorted(iterable=self.sensors, key=lambda sensors: sensors.sensor_id, reverse=False)
+        return
+    
+    def __str__(self):
+        return str(self.time_slice) + ' ' + str(self.sensors)
+    
+    def __init__(self, tm_slc:TimeSlice, q_itm_snsr:TSQueueItemSensor):
+        self.time_slice = tm_slc
+        self.sensors = []
+        self.sensors.append(q_itm_snsr)
+        return
+    
+    def __lt__(self, other):
+        if ((self == None) and (other == None)):
+            return False
+        elif (self.time_slice == None):
+            return False
+        elif(other == None):
+            return True
+        return self.time_slice.sort_key < other.time_slice.sort_key
+     
+    def __eq__(self, other): 
+        try:
+            return self.time_slice.sort_key == other.time_slice.sort_key
+        except:
+            pass
+        return False
+    
+    def __le__(self, other):
+        if ((self == None) and (other == None)):
+            return True
+        elif (self.time_slice == None):
+            return False
+        elif(other == None):
+            return True
+        return self.time_slice.sort_key <= other.time_slice.sort_key
+        
+    def __ne__(self, other):
+        if ((self == None) and (other == None)):
+            return False
+        elif (self.time_slice == None):
+            return True
+        elif(other == None):
+            return True
+        return self.time_slice.sort_key != other.time_slice.sort_key
+    
+    def __gt__(self, other):
+        if ((self == None) and (other == None)):
+            return False
+        elif (self.time_slice == None):
+            return True
+        elif(other == None):
+            return False
+        return self.time_slice.sort_key > other.time_slice.sort_key
+        
+    def __ge__(self, other):
+        if ((self == None) and (other == None)):
+            return True
+        elif (self.time_slice == None):
+            return True
+        elif(other == None):
+            return False
+        return self.time_slice.sort_key >= other.time_slice.sort_key
+          

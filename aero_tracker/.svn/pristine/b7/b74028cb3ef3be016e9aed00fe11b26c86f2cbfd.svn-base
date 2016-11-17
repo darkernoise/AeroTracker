@@ -1,0 +1,95 @@
+'''
+Created on Jun 5, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+from aero_tracker.trilateration.sensor_coordinates import SensorCoordinates
+
+class ConnectionParams(object):
+    '''
+    Parameters send over during a sensor connection to the server.  This handshake 
+    configures the server to be able to identify and triangulate each sensor value.
+    '''
+    DELIMITER = "|"
+    INITIALIZER = "CONN_PARAMS"
+    INITIALIZER_LEN = len(INITIALIZER)
+    
+    cluster_id = ""
+    sensor_id = ""
+    degrees_turned = 0
+    distance_from_base = 0
+    height_from_ground = 0
+    _sensor_coordinates = None
+    
+    @staticmethod
+    def isInitializerStr(strVal):
+        if (len(strVal) == ConnectionParams.INITIALIZER_LEN):
+            if (strVal[0:ConnectionParams.INITIALIZER_LEN] == ConnectionParams.INITIALIZER):
+                return True
+        return False
+    
+    @staticmethod
+    def objFromCSV(csv):
+        obj = None
+        vals = csv.split(ConnectionParams.DELIMITER)
+        if (vals[0] == ConnectionParams.INITIALIZER):
+            obj = ConnectionParams(cluster_id=vals[1], \
+                sensor_id=vals[2], \
+                degrees_turned=int(vals[3]), \
+                distance_from_base=int(vals[4]), \
+                height_from_ground=int(vals[5]))
+        else:
+            msg = "Invalid Connection Params received from sensor"
+            raise Exception(msg)
+            
+        return obj
+    
+    def toCSV(self):
+        '''
+        CSV format data
+        '''
+        rslt = self.INITIALIZER + \
+            self.DELIMITER + \
+            self.cluster_id + \
+            self.DELIMITER + \
+            self.sensor_id + \
+            self.DELIMITER + \
+            str(self.degrees_turned) + \
+            self.DELIMITER + \
+            str(self.distance_from_base) + \
+            self.DELIMITER + \
+            str(self.height_from_ground)
+        return rslt
+    
+    def get_sensor_coordinates(self):
+        if (self._sensor_coordinates == None):
+            self._sensor_coordinates = SensorCoordinates(sensor_params = self)
+        return self._sensor_coordinates
+
+    def __init__(self, cluster_id, sensor_id, degrees_turned, distance_from_base, height_from_ground):
+        '''
+        Constructor
+        '''
+        self.cluster_id = cluster_id
+        self.sensor_id = sensor_id
+        self.degrees_turned = degrees_turned
+        self.distance_from_base = distance_from_base
+        self.height_from_ground = height_from_ground
+        

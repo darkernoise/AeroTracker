@@ -1,0 +1,126 @@
+'''
+Created on Oct 22, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import typing
+import time
+# import multiprocessing as mp
+from aero_tracker.network.at_pipe_pool import AT_PipePool
+from aero_tracker.params.at_sensor_cluster_params import ATSensorClusterParams
+from aero_tracker.common.at_process_base import AT_ProcessBase
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.network.at_sensor_data_packet import AT_SensorDataPacket
+from aero_tracker.trilateration.at_time_slice_queue import AT_TimeSliceQueue
+from aero_tracker.trilateration.raw_data.ts_queue_item import TSQueueItem
+
+class AT_DataSorter(AT_ProcessBase):
+    '''
+    This object reads from the data pipes connected to the sensor targets in order to 
+    group the data by target and then synchronize the data into time slices.  Once complete, 
+    the data is moved over to the data processing server.
+    '''
+    NUM_PIPES = 6 #TODO  This needs to be incremented based on the number of sensor arrays
+    SYNCHRONIZE_ON_TIME_DIFF = 0.5
+    STATISTICS_UPDATE_NUM = 1000
+    
+    _pipe_pool = AT_PipePool
+    _num_pipes = 0
+    _rec_cnt = 0
+    _time_slice_queue = AT_TimeSliceQueue
+    _receive_stats_psec = 0
+    _packet_timer = None
+    _target_data = typing.Dict
+        
+    @property
+    def pipe_pool(self):
+        return self._pipe_pool
+    
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        if (self._packet_timer == None):
+            self._packet_timer = time.time()
+        
+        no_data = True
+        datpkt = AT_SensorDataPacket
+        
+        for i in range(0, self._num_pipes):
+            conn = self._pipe_pool.parent_conns[i]
+            if (conn.poll()):
+                data_packet_bytes = conn.recv()
+                if (data_packet_bytes != None):
+                    no_data = False
+#                     print(data_packet_bytes)
+                    
+                    datpkt = AT_SensorDataPacket.from_packet_bytes(pkt_bytes=data_packet_bytes)
+                    if (not datpkt.target_id in self._target_data):
+                        #Target does not exist
+                        tsqueue = AT_TimeSliceQueue(self.params)
+                        self._target_data.update({datpkt.target_id:tsqueue})
+                        
+                    #Add to the proper target queue    
+                    tsqueue = self._target_data[datpkt.target_id]
+                    tsqueue.enqueue(sensor_datpkt=datpkt)
+                    itm = TSQueueItem
+                    itm = tsqueue.pop() #TSQueueItem
+                    if (itm != None):
+                        print(str(itm.time_slice.sort_key) + ' # sensors:' + str(len(itm.sensors)))    
+                    
+                    #Statistics update
+                    self._rec_cnt += 1
+                    if (self._rec_cnt >= self.STATISTICS_UPDATE_NUM):
+                        time_passed = time.time() - self._packet_timer
+                        self._receive_stats_psec = self._rec_cnt / time_passed
+                        self.log.log3(msg1='Data Sorter received:', 
+                            msg2=str(self._rec_cnt) + ' recs', 
+                            msg3='at ' + str(self._receive_stats_psec) + ' pkts/sec', 
+                            caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)    
+                        self._rec_cnt = 0
+                        self._packet_timer = time.time()
+        
+        #Do cleanup during slow cycles
+        if (no_data):
+            #See if any queues are inactive
+            trgt_queue = AT_TimeSliceQueue
+            for target_id in self._target_data:
+                trgt_queue = self._target_data[target_id]
+                if (trgt_queue.queue_inactive):
+                    #Free the inactive queue
+                    del self._target_data[target_id]
+            time.sleep(0.1)
+        
+        return
+
+    def __init__(self, params:ATSensorClusterParams, log_file:str):
+        '''
+        Constructor
+        '''
+        super().__init__(params=params, log_file=log_file)
+        self._pipe_pool = AT_PipePool(params=params, num_pipes=params.num_sensors)
+        self._num_pipes = self._pipe_pool.num_pipes
+        self._time_slice_queue = AT_TimeSliceQueue(params)
+        self._target_data = {}
+        return
+
+    
+    
+        

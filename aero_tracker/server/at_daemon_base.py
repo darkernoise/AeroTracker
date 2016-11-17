@@ -1,0 +1,158 @@
+'''
+Created on Aug 15, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+import os
+import sys
+import signal
+import threading
+from subprocess import check_output
+import multiprocessing as mp
+from aero_tracker.exception.at_exception import AT_Exception
+from aero_tracker.log.at_logging import AT_Logging
+
+class AT_DaemonBase(threading.Thread):
+    '''
+    Base class for a daemon program.
+    '''
+    
+    @property
+    def daemon_name(self):
+        ':rtype list(str)'
+        '''
+        This is mean to to be redefined by the parent.
+        '''
+        return 'Daemon'
+    
+    @property
+    def debug_level(self):
+        'rtype int'
+        return self._default_debug_level
+    
+    @property
+    def is_running(self):
+        self._lock.acquire(blocking=True)
+        rval = self._run
+        self._lock.release()
+        return rval
+    
+    @property
+    def log(self):
+        return self._log
+    
+    @property
+    def params(self):
+        return self._params
+
+    ##############################
+    # Variables
+    ##############################
+    _run = False
+    _default_debug_level = 2
+    _params = None
+    _log = None
+    _lock = None
+    _stop_executed = False
+    
+    ##############################
+    # Public Methods
+    ##############################
+    def run(self):   
+        ex = AT_Exception(source=self, method='run', message='AT_DaemonBase.run must be redefined')
+        raise ex            
+        return 
+    
+    def start(self):
+        if (not self._run):
+            self._run = True
+            self.log.log2(msg1=self.daemon_name, msg2='start requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+            super().start()
+        return
+    
+    #Server stop signaled
+    def stop(self):
+        self._run = False;
+        if (not self._stop_executed):
+            self._stop_executed = True
+            self.log.log2(msg1=self.daemon_name, msg2='stop requested', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+            self.cleanUp()
+        sys.exit()
+        return
+    
+    def cleanUp(self):
+        if (self._run):
+            self.stop()
+        if (self.log != None):
+            self.log.log2(msg1=self.daemon_name, msg2='cleaning up program resources', caller=self, msgty=AT_Logging.MSG_TYPE_WARNING)
+        else:
+            print(self.daemon_name, 'Cleaning up program resources')
+        self._cleanup_multiprocessing()
+        return
+    
+    def load_parameters(self):
+        #Redefine to return an instance of the parameters object.
+        #Example: return AT_Logging(self._params)
+        ex = AT_Exception(source=self, method='run', message='AT_DaemonBase.load_parameters must be redefined')
+        raise ex 
+        return None
+    
+    def __init__(self, log_file='', default_debug_level=2):
+        super().__init__()
+        self._lock = threading.RLock()
+        self._params = self.load_parameters()
+        self._log = AT_Logging(self._params, log_file)
+        self._default_debug_level = default_debug_level
+        self.daemon = False
+        return
+    
+    def __del__(self):
+        self.cleanUp()
+        return
+    
+    def _cleanup_multiprocessing(self):
+        
+        self._linux_kill()
+        
+        return
+    
+    def _print_info(self):
+        try:
+            self.log.log2(msg1='System CPUs', msg2=str(mp.cpu_count()), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+        except: 
+            pass
+        return
+    
+    def _linux_kill(self):
+        try:                
+            proc_pid = os.getpid()
+            if (proc_pid != None) and (proc_pid > 0):
+                pgroup = os.getpgid(proc_pid)
+                if (pgroup > 0):
+                    proc_pid = pgroup
+                print('Killing process: ' + str(proc_pid))
+                os.kill(int(proc_pid), signal.SIGKILL)
+#                 check_output('kill -9 -' + str(proc_pid).strip()).decode(sys.stdout.encoding).strip()
+        except:
+            pass
+         
+        return
+    
+    
+        

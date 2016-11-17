@@ -1,0 +1,110 @@
+'''
+Created on Oct 27, 2016
+
+@author: Joel Blackthorne
+'''
+
+from aero_tracker.common.at_process_base import AT_ProcessBase
+from aero_tracker.ble.ble_scanner import BLEScanner
+from aero_tracker.ble.ble_packet import BLE_Packet
+from aero_tracker.params.at_sensor_cluster_params import ATSensorClusterParams
+from aero_tracker.sensor.sensor_device import SensorDevice
+from aero_tracker.target.tx_item_list import TX_Item_List
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.data.at_target_sort import AT_TargetSort
+from aero_tracker.data.at_target_sort import AT_TargetSortItem
+import typing
+import time
+
+class AT_SensorReader(AT_ProcessBase):
+    '''
+    Process to read the sensor values in sequence.
+    '''
+    BLE_EVENT_COUNT = 1
+    STATISTICS_CNT = 100
+    
+    _tx_list_changed = True
+    _ble_scanners = typing.List
+    _read_cnt = 0
+    _start_time = None
+    
+    @property
+    def log_file(self):
+        return '/var/log/aerotracker/at_sensor_rdr.log'
+    
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        if (self._start_time == None):
+            self._start_time = time.time()
+            
+        ble_scanner = BLEScanner
+        data_srt = AT_TargetSort(params=self.params)
+        
+        for i in range(0, self._params.num_sensors):
+            ble_scanner = self._ble_scanners[i]
+            sensor = self._params.get_sensor_by_index(i) # sensor = SensorDevice:
+            returned_list = ble_scanner.getEvents(sensor_id=sensor.sensor_id, 
+                num_events=self.BLE_EVENT_COUNT, tx_list=self._get_tx_list())
+            for ble_pkt in returned_list:
+                data_srt.add(ble_pkt)
+                self._read_cnt += 1
+                
+        #send the time target time slices to the first level filter process
+        target_slices = data_srt.get_target_time_slices()
+        tgt_slc = AT_TargetSortItem
+        for tgt_slc in target_slices:
+            print(tgt_slc.time_slice.sort_key)
+        
+        #statistics check
+        if (self._read_cnt > self.STATISTICS_CNT):
+            time_passed = time.time() - self._start_time
+            rate_psec = self._read_cnt / time_passed
+            self.log.log2(msg1='Sensor read rate: ' + str(rate_psec) + ' pkts/sec.', msg2='Last from: ' + str(len(tgt_slc.ble_packets)) + ' sensors', caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+            self._read_cnt = 0
+            self._start_time = time.time()
+        
+        return
+
+    def __init__(self, dir_store, params:ATSensorClusterParams):
+        '''
+        Constructor
+        '''
+        super().__init__(params=params, log_file=self.log_file)
+        self._tx_list_changed = True
+        self._register_sensors(dir_store=dir_store)
+        self._create_ble_scanners()
+        self._read_cnt = 0
+        return
+    
+    def _create_ble_scanners(self):
+        self._ble_scanners = []
+        for i in range(0, self._params.num_sensors):
+            sensor = SensorDevice
+            sensor = self._params.get_sensor_by_index(i) # sensor = SensorDevice:
+            ble_scanner = BLEScanner(sensor.sensor_id, sensor.device_num)
+            self._ble_scanners.append(ble_scanner)
+        return
+    
+    def _register_sensors(self, dir_store):
+        for i in range(0, self._params.num_sensors):
+            sensor = SensorDevice
+            sensor = self._params.get_sensor_by_index(i) # sensor = SensorDevice:
+            #Todo
+            
+        return
+            
+    def _get_tx_list(self):
+        '''
+        Gets a list of all transmitters to listen for.
+        '''
+        #TODO
+        #For now, this is hard-coded by means of a Static Transmitters file
+        if (self._tx_list_changed):
+            self._TX_List = TX_Item_List()
+            self._tx_list_changed = False
+        return self._TX_List
+            
+    
+        

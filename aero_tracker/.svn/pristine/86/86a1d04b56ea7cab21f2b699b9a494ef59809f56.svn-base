@@ -1,0 +1,254 @@
+'''
+Created on Sep 20, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import socket
+import typing
+import time
+from aero_tracker.network.at_network_address import AT_NetworkAddress
+from aero_tracker.network.at_protocol import AT_Protocol
+from aero_tracker.log.at_logging import AT_Logging
+from aero_tracker.data.at_data_rate import AT_DataRate
+
+class AT_ListenerConnection(object):
+    '''
+    Local class for listener connections.
+    '''
+    
+    MAX_SEND_ERROR_CNT = 20
+    
+    _net_address = None
+    _listener_socket = None
+    listener_name = ''
+    _log = None
+    _target_id = None
+    _target_id_sent = False
+    _num_errors = 0
+    
+    @property
+    def address(self):
+        return self._net_address.address
+    
+    @property
+    def port(self):
+        return self._net_address.port
+    
+    def close(self):
+        '''
+        Close out open connection.
+        '''
+        self._closeServerSocket()
+        return
+    
+    def send_bytes(self, data_bytes):
+        rval = False
+        try:
+            if (self._listener_socket == None):
+                self._openServerSocket(lstnr_addr=self._net_address)
+            if (not self._target_id_sent):
+                self._target_id_sent = True
+                self._send_target_id()
+            self._listener_socket.send(data_bytes)
+            rval = True
+            self._num_errors = 0
+        except Exception as ex:
+            self._num_errors += 1
+            print('Exception:', ex)
+            self._closeServerSocket()
+            if (self._num_errors < self.MAX_SEND_ERROR_CNT):
+                rval = True
+        return rval
+    
+    def __init__(self, target_id, listener_name, address, port, log):
+        self._target_id = target_id
+        self.listener_name = listener_name
+        self._net_address = AT_NetworkAddress(display_name=listener_name, address=address, port=port)
+        self._log = log
+        #Open a socket to this new listener connection
+        self._openServerSocket(lstnr_addr=self._net_address)
+        self._target_id_sent = False
+        return
+    
+    def _send_target_id(self):
+        rslt = self._target_id
+        rslt += AT_Protocol.DATA_TERMINATOR + \
+            AT_Protocol.LINE_BREAK
+        data_bytes = str.encode(rslt)
+        self._listener_socket.send(data_bytes)
+        return
+    
+    def _openServerSocket(self, lstnr_addr:AT_NetworkAddress):
+        self._listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._listener_socket.connect((lstnr_addr.address, int(lstnr_addr.port)))
+        self._log.log2(msg1='Connected on socket:', msg2=str(lstnr_addr), caller=self, msgty=AT_Logging.MSG_TYPE_INFO)
+        return
+        
+    def _closeServerSocket(self):
+        try:
+            self._log.log2(msg1='Disconnecting Listener', msg2=str(self._net_address), \
+                        caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        except:
+            pass
+        if (self._listener_socket != None):
+            try:
+                if (not self._listener_socket._closed):
+                    self._listener_socket.close()
+            except:
+                pass
+        self._listener_socket = None
+        return
+    
+
+class AT_ListenerMulticast(object):
+    '''
+    Multicasts data results to registered data listeners.
+    '''
+    LISTENER_REFESH_CHECK = 200
+    RATE_UPDATE_CNT = 1000
+    
+    _params = None
+    _log = None
+    _dir_store = None
+    _listener_check_cnt = 200 #Should match LISTENER_REFESH_CHECK
+    _registered_listeners = []
+#     _start_time = None
+#     _rate_psec = 0
+#     _rate_cnt = 0
+    _target_id = None
+    _rate_data_send = AT_DataRate
+    
+    def refresh_check(self):
+        '''
+        Checks to see if a listener refresh update is needed.
+        '''
+        self._listener_check_cnt += 1
+        if (self._listener_check_cnt > self.LISTENER_REFESH_CHECK):
+            #time to check for registered listeners
+            self._update_listeners_list()
+            self._listener_check_cnt = 0
+        return
+    
+    def send(self, result_line:typing.Tuple):
+        '''
+        Multicasts result data.  
+        
+        params:
+        result_line should be a single line of data.
+        '''
+        if (len(self._registered_listeners) == 0):
+            self._start_time = None
+            return
+        
+        for lstnr in self._registered_listeners:
+            try:
+                lstnr_alive = lstnr.send_bytes(self._result_line_to_bytes(result_line))
+                if (not lstnr_alive):
+                    #Remove listener registration
+                    self._close_listener(lstnr)
+            except Exception as ex:
+                self._dir_store.close_result_listener(listener_name=lstnr.listener_name, address=lstnr.address, port=lstnr.port)
+                self._log.log3(msg1='Error sending to Listener', msg2=lstnr.listener_name + ' - ' + lstnr.address + ':' + str(lstnr.port), \
+                    msg3=str(ex), caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        
+        self._rate_data_send.increment_cnt()
+        return
+
+    def _result_line_to_bytes(self, result_line:typing.Tuple):
+        '''
+        Converts result line into bytes to send across the network.
+        '''
+        rslt = ''
+        for val in result_line:
+            if (rslt == ''):
+                rslt = str(val)
+            else:
+                rslt += AT_Protocol.DATA_DELIMITIER + str(val)
+        rslt += AT_Protocol.DATA_TERMINATOR + \
+            AT_Protocol.LINE_BREAK
+        return str.encode(rslt)
+
+
+    def __init__(self, dir_store, target_id, params, log):
+        '''
+        Constructor
+        '''
+        self._dir_store = dir_store
+        self._params = params
+        self._log = log
+        self._target_id = target_id
+        self._listener_check_cnt = self.LISTENER_REFESH_CHECK
+        self._rate_data_send = AT_DataRate(log=log, report_label='Listener Multi-cast send', report_cnt=self.RATE_UPDATE_CNT)
+        return
+    
+    def _close_listener(self, lstnr:AT_ListenerConnection):
+        try:
+            self._dir_store.close_result_listener(listener_name=lstnr.listener_name, 
+                address=lstnr.address, port=lstnr.port)
+        except Exception as ex:
+            print(ex)
+        return
+    
+    def _update_listeners_list(self):
+        '''
+        Refresh the list of attached listeners.
+        '''
+        lstnrs = self._dir_store.get_result_data_listeners()
+        #add any new listeners
+        for lstnr in lstnrs:
+            try:
+                self._add_listner_reg(lstnr)
+            except Exception as ex:
+                self._dir_store.close_result_listener(listener_name=lstnr[0], address=lstnr[1], port=lstnr[2])
+                self._log.log2(msg1='Could not connect to Listener', msg2=lstnr[0] + ' : ' + lstnr[1] + ':' + str(lstnr[2]), \
+                        caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+         
+        #Remove any deleted listeners
+        for i in range(0, len(self._registered_listeners)):
+            reg = self._registered_listeners[i]
+            found = False
+            for lstnr in lstnrs:
+                if (lstnr[1] == reg.address) and (lstnr[2] == reg.port):
+                    found = True
+                    exit
+            if (not found):
+                #remove deleted listener
+                reg.close()
+                self._registered_listeners.pop(i)
+
+        return
+    
+    def _add_listner_reg(self, lstnr):
+        '''
+        Adds a new listener registration if not already present.
+        '''
+        for reg in self._registered_listeners:
+            if (reg.address == lstnr[1]) and (reg.port == lstnr[2]):
+                #already exists
+                return
+        #does not exist, so add
+        con = AT_ListenerConnection(target_id=self._target_id, 
+            listener_name=lstnr[0], address=lstnr[1], 
+            port=lstnr[2], log=self._log)
+        self._registered_listeners.append(con)
+        return
+    
+        
+        

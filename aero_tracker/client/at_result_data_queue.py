@@ -1,0 +1,245 @@
+'''
+Created on Oct 3, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+# from aero_tracker.client.result_listener_base import ResultListenerBase
+import typing
+import time
+import multiprocessing as mp
+from aero_tracker.event.at_event import AT_Event
+from aero_tracker.common.at_threaded_base import AT_ThreadedBase
+from aero_tracker.client.at_result_data_listener import AT_ResultDataListener
+from aero_tracker.data.lap_data_sort import LapDataSort
+
+class AT_ResultDataQueue(AT_ThreadedBase):
+    '''
+    Implementation class that listens for results data and makes that result data available via a queue object.  This
+    class spawns a separate thread for data receiving, which in turn creates a socket server and handler.
+    '''
+    BLOCK_TIMEOUT_SECS = 4
+    CYCLES_LAP_RESET = 30
+    CYCLES_RACE_RESET = 200
+
+    #Events
+    '''
+    The on_new_lap event has parameters:
+    
+    sender : Object reference of sender
+    target_id : target id string
+    target_index : index of the target queue required to retrieve data arrays
+    lap_number : number of laps completed
+    
+    Note: on_new_lap is relative to a single pole.  This event firing really means 
+    that a vehicle has crossed the apex of a turn around the given pole.
+    '''
+    on_new_lap = AT_Event()
+    
+    '''
+    The on_data event has parameters:
+    
+    sender : Object reference of sender
+    cluster_id: ID of sensor cluster (pole)
+    target_id : target id string
+    target_index : index of the target queue required to retrieve data arrays
+    '''
+    on_data = AT_Event()
+    
+    '''
+    The on_cut event has parameters:
+    
+    sender : Object reference of sender
+    cluster_id: ID of sensor cluster (pole)
+    target_id : target id string
+    target_index : index of the target queue required to retrieve data arrays
+    num_cuts : number of current cuts
+    '''
+    on_cut = AT_Event()
+    
+    '''
+    The on_turn_apex even hast the following parameters:
+    
+    
+    '''
+    on_turn_apex = AT_Event()
+    
+    
+    '''
+    The on_lap_complete event has the following parameters:
+    
+    sender : Object reference of sender
+    cluster_id: ID of sensor cluster (pole)
+    target_id : target id string
+    target_index : index of the target queue required to retrieve data arrays
+    num_cuts : number of current cuts
+    lap_number : number of laps completed
+    '''
+    on_lap_complete = AT_Event()
+
+    _rslt_queue = None #raw incoming result queue
+    _target_queues = [] #List of target queues
+    _listener_name = ''
+    _result_listener = None
+    _rd_started = False #Result Data Queue stareted
+    _cycles_with_no_data = 0
+    _pole_lap_number = 0 #number of times around this single pole
+    
+    def graph_x(self, target_index)->typing.List:
+        trgt_q = self._get_target_queue_by_index(target_index)
+        lap_srt = trgt_q[1]
+        return lap_srt.x
+    
+    def graph_y(self, target_index)->typing.List:
+        trgt_q = self._get_target_queue_by_index(target_index)
+        lap_srt = trgt_q[1]
+        return lap_srt.y
+    
+    def graph_z(self, target_index)->typing.List:
+        trgt_q = self._get_target_queue_by_index(target_index)
+        lap_srt = trgt_q[1]
+        return lap_srt.z
+    
+    @property
+    def _rslt_data_available(self):
+        self.thread_lock.acquire(blocking=True, timeout=self.BLOCK_TIMEOUT_SECS)
+        rval = not self._rslt_queue.empty()
+        self.thread_lock.release()
+        return rval
+    
+    def _next_rslt_data(self):
+        '''
+        Returns the next result.
+        '''
+        self.thread_lock.acquire(blocking=True, timeout=self.BLOCK_TIMEOUT_SECS)
+        rval = self._rslt_queue.get(block=True, timeout=self.BLOCK_TIMEOUT_SECS)
+        self.thread_lock.release()
+        return rval
+    
+    def run_clycle(self):
+        '''
+        Executes within the while is_running loop.
+        '''
+        if (not self._rd_started):
+            self._result_listener.start()
+            self._rd_started = True
+        while (self._rslt_data_available):
+            pkt = self._next_rslt_data()
+            if (pkt != None):
+                cluster_id = pkt[0]
+                target_id = pkt[1] 
+                trgt_q = self._get_target_queue(cluster_id, target_id)
+                lap_srt = trgt_q[2]
+                #Save pre-sort values
+                num_cuts_pre = lap_srt.num_cuts
+                lap_num_pre = lap_srt.lap_number
+                #Append to sorter
+                new_lap = lap_srt.append_data(dat=pkt[2])
+                #Check post-sort values
+                num_cuts_post = lap_srt.num_cuts
+                lap_num_post = lap_srt.lap_number
+                #Cut Event
+                if (num_cuts_pre != num_cuts_post):
+                    self.on_cut.fire(sender=self, cluster_id=cluster_id, target_id=target_id, target_index=self._get_target_queue_index(cluster_id, target_id), num_cuts=num_cuts_post)
+                
+                #Check lap around pole change
+                if (lap_num_pre != lap_num_post):
+                    self.on_new_lap.fire(sender=self, cluster_id=cluster_id, target_id=target_id, target_index=self._get_target_queue_index(cluster_id, target_id), lap_number=lap_num_post)
+                    #Turn Apex Event
+                    self.on_turn_apex.fire(sender=self, cluster_id=cluster_id, target_id=target_id, target_index=self._get_target_queue_index(cluster_id, target_id), lap_number=lap_num_post, turn_apex=lap_srt.last_apex)
+                   
+                #On Data Event
+                self.on_data.fire(sender=self, cluster_id=cluster_id, target_id=target_id, target_index=self._get_target_queue_index(cluster_id, target_id))
+                self._cycles_with_no_data = 0
+#             else:
+#                 if (lap_srt.check_lap_timeout()):
+#                     #timeout happens based on seconds since last data
+#                     self._lap_reset(lap_srt, target_id, lap_num_post)
+#                 if (lap_srt.check_race_timeout()):
+#                     self._race_reset(trgt_q=trgt_q)
+                    
+#                 self._cycles_with_no_data += 1
+#                 if (self._cycles_with_no_data > self.CYCLES_LAP_RESET):
+#                     self._lap_reset(lap_srt, target_id, lap_num_post)
+#                 if (self._cycles_with_no_data > self.CYCLES_RACE_RESET):
+#                     self._race_reset(trgt_q=trgt_q)
+                
+        time.sleep(0.1)
+        return
+    
+    def _lap_reset(self, lap_srt, target_id):
+        '''
+        This even is called when no new data for a given lap has come in for some time.
+        
+        Note: We don't clear the graphing data here though.  The graph is cleared on the start of the next lap
+        so that the last lap can be viewed as long as possible.
+        '''
+        if (lap_srt.lap_number > 0):
+            self.on_lap_complete.fire(sender=self, 
+                target_id=target_id, 
+                target_index=self._get_target_queue_index(target_id), 
+                num_cuts = lap_srt.num_cuts,
+                lap_number=lap_srt.lap_number)
+        return
+    
+    def _race_reset(self, trgt_q):
+        #Create new lap data sorter
+        trgt_q[1] = LapDataSort(self.params)
+        return
+    
+    def _get_target_queue(self, cluster_id, target_id):
+        for q in self._target_queues:
+            if ((q[0] == cluster_id) and (q[1] == target_id)):
+                return q
+        #Queue does not exist, so create
+        lap_dat_srt = LapDataSort(self.params)
+        q = [cluster_id, target_id,lap_dat_srt,[]]
+        self._target_queues.append(q)
+        return q
+    
+    def _get_target_queue_index(self, cluster_id, target_id):
+        for i in range(0, len(self._target_queues)):
+            q = self._target_queues[i]
+            if ((q[0] == cluster_id) and (q[1] == target_id)):
+                return i
+        return -1
+    
+    def _get_target_queue_by_index(self, index):
+        return self._target_queues[index]
+    
+
+    def __init__(self, params, listener_name, log_file):
+        '''
+        Constructor
+        '''
+        super().__init__(params=params, log_file=log_file)
+        self._listener_name = listener_name
+        self._rslt_queue = mp.Queue(maxsize=1000)
+        self._result_listener = AT_ResultDataListener(
+            params=self._params, 
+            listener_name=self._listener_name,
+            rslt_queue=self._rslt_queue, 
+            log_file=log_file,
+            event_on_new_lap=self.on_new_lap, 
+            event_on_data=self.on_data, 
+            event_on_cut=self.on_cut, 
+            event_on_turn_apex=self.on_turn_apex)
+        return
+    
+    

@@ -1,0 +1,252 @@
+'''
+Created on Aug 15, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import multiprocessing as mp
+# from aero_tracker.network.at_response import AT_Response
+from aero_tracker.network.at_protocol import AT_Protocol
+from aero_tracker.log.at_logging import AT_Logging
+# from aero_tracker.network.at_response_get_manager_port import AT_RespGetManagerPort
+from aero_tracker.sensor.sensor_device import SensorDevice
+# from aero_tracker.network.at_command_reg_data_proc_srvr import AT_CommandRegDataProcSrvr
+from aero_tracker.network.at_data_proc_address import AT_DataProcAddress
+from aero_tracker.network.at_network_address import AT_NetworkAddress
+from aero_tracker.network.at_data_proc_address import AT_DataProcAddress
+
+class AT_DirectoryStore(object):
+    '''
+    Object that is shared between processes to store and retrieve the directory details.
+    '''
+    
+    _lock = None
+    _data_proc_srvrs = None # [AT_NetworkAddress]
+    _data_proc_srvr_assignments = [] #form [target_id, AT_NetworkAddress]
+    _data_listeners = None
+    _params = None
+#     _manager_port = 99
+    _sensors = [] #type SensorDevice
+    _log = None
+    _sensor_calib_data = [] #tuple in form [sensor_id, calibration data[]]
+    
+    
+    def get_instance(self):
+        self._lock.acquire()
+        self._log.log2(msg1='Incoming connection to directory store',msg2='get_instance', caller=self, msgty=AT_Logging.MSG_TYPE_DEBUG)
+        self._lock.release()
+        return self
+    
+    def set_sensor_calib_data(self, sensor_id, calib_data):
+        '''
+        Sets calib_data tuple in form: [rssi,distance,rssi_delta,distance_delta]
+        '''
+        for snsr in self._sensor_calib_data:
+            if (snsr[0] == sensor_id):
+                snsr[1] = calib_data
+                return
+        #sensor does not exist yet
+        self._sensor_calib_data.append([sensor_id, calib_data])
+        return
+    
+    def get_sensor_calib_data(self, sensor_id):
+        '''
+        Gets calib_data tuple in form: [rssi,distance,rssi_delta,distance_delta]
+        '''
+        for snsr in self._sensor_calib_data:
+            if (snsr[0] == sensor_id):
+                return snsr
+        return None
+    
+    def get_calibrated_sensor_ids(self)->str:
+        '''
+        Gets a list of all calibrated sensor ids.
+        '''
+        rval = []
+        for snsr in self._sensor_calib_data:
+            rval.append(snsr[0])
+        return rval
+    
+    def get_data_proc_srvrs(self):
+        '''
+        Get a list of all data processing servers.
+        '''
+        self._lock.acquire()
+        rval = self._data_proc_srvrs
+        self._lock.release()
+        return rval
+    
+    def get_data_proc_srvr_assignments(self):
+        '''
+        Gets a list of all data processing server assignments.
+        
+        Returns List in form: [target_id, srvr]
+        '''
+        return self._data_proc_srvr_assignments
+        
+    
+    def get_data_port_for_target(self, target_id:str)->AT_DataProcAddress:
+        '''
+        Requests assignment of a data processing server for a given target id.
+        '''
+        self._lock.acquire()
+
+        #Check for existing assignments
+        srvr = None
+        for assgn in self._data_proc_srvr_assignments:
+            if assgn[0] == target_id:
+                srvr = assgn[1] #type AT_NetworkAddress
+                self._lock.release()
+                return srvr
+        #Assignment does not exist yet, so create
+        
+        srvr = self.get_unused_data_proc_srvr()
+        if (srvr != None):
+            self._data_proc_srvr_assignments.append([target_id, srvr])
+        
+        self._lock.release()
+        return srvr #AT_NetworkAddress(server_name='', port=-1)
+    
+    def get_unused_data_proc_srvr(self)->AT_DataProcAddress:        
+        for srvr in self._data_proc_srvrs:
+            found = False
+            for tst_srvr in self._data_proc_srvr_assignments:
+                if ((srvr.address == tst_srvr.address) and 
+                    (srvr.port == tst_srvr.port)):
+                    found = True
+                    exit
+            if (not found):
+                return srvr
+        
+        return None
+    
+    def free_data_proc_srvr(self, target_id:str):
+        '''
+        Release a data processing server that is no longer being used.
+        '''
+        self._lock.acquire()
+        #Check for existing assignments
+        srvr = None
+        for i in range(0, len(self._data_proc_srvr_assignments)):
+            assgn = self._data_proc_srvr_assignments[i]
+            if assgn[0] == target_id:
+                self._data_proc_srvr_assignments.pop(i)
+                self._lock.release()
+                return
+        #not found
+        self._lock.release()
+        return
+    
+    def get_sensor(self, cluster_id, sensor_id)->SensorDevice:
+        '''
+        Retrieves a registered sensor by id.
+        '''
+        for snsr in self._sensors:
+            if ((snsr.cluster_id == cluster_id) and 
+                (snsr.sensor_id == sensor_id)):
+                return snsr 
+        return None
+    
+    def add_result_data_listener(self, listener_name, address, port):
+        '''
+        Registers a data listener.
+        '''
+        self._lock.acquire()
+        for lstnr in self._data_listeners:
+            if ((lstnr[1] == address) and (lstnr[2] == port)):
+                #client is already registered
+                return
+        #add new listener
+        self._data_listeners.append([listener_name, address, port])      
+        self._lock.release()
+        return
+    
+    def get_result_data_listeners(self):
+        '''
+        Gets a tuple of all registered data listeners.
+        
+        Result in form: [listener_name, address, port]
+        '''
+        return self._data_listeners
+    
+    def close_result_listener(self, listener_name, address, port):
+        '''
+        Closes out a registered listener.
+        '''
+        self._lock.acquire()
+        for i in range(0, len(self._data_listeners)):
+            lstnr = self._data_listeners[i]
+            if ((lstnr[1] == address) and (lstnr[2] == port)):
+                self._data_listeners.pop(i)
+                exit    
+        self._lock.release()
+        return
+    
+    def add_sensor(self, sensor:SensorDevice):
+        '''
+        Directory server maintains a list of all sensors devices registered on the network.
+        '''
+        for snsr in self._sensors:
+            if (snsr.sensor_id == sensor.sensor_id):
+                #already exists, so quit
+                return
+        self._sensors.append(sensor)
+        return
+
+    
+    def add_data_processing_server(self, server:AT_DataProcAddress):
+        '''
+        A data processing server registers that it is available for processing and passes its connection details
+        to save in the directory store.  The directory store does not yet know which target will be assigned to
+        the registered processing server, or if any target will be assigned.  It is only when a sensor node 
+        contacts the directory server and asks for a processing server will the target id be assigned.  Once a 
+        target id is assigned to a processing server, all nodes processing that target will contact the single 
+        authoritative processing server for that target.
+        
+        The response to a data processing server registering itself is a port number on the directory server which can
+        remotely instantiate the manager.directory store object methods. This allows the data processing server the 
+        ability to refresh the list of data listeners as they register.
+        '''
+        self._lock.acquire()
+        srvr = None
+        for tst_srvr in self._data_proc_srvrs:
+            if ((server.address == tst_srvr.address) and 
+                (server.port == tst_srvr.port)):
+                srvr = server
+                tst_srvr = server
+                exit
+                
+        if (srvr == None):
+            self._data_proc_srvrs.append(server)
+        self._lock.release()
+        return True
+
+    def __init__(self, log, params):
+        '''
+        Constructor
+        '''
+        self._params = params
+        self._log = log
+        self._lock = mp.RLock()
+        self._data_proc_srvrs = []
+        self._data_listeners = []
+        return
+    
+    
+        

@@ -1,0 +1,91 @@
+'''
+Created on Oct 27, 2016
+
+@author: Joel Blackthorne
+
+AeroTracker, Copyright (C) 2016 Joel Blackthorne
+This file is part of AeroTracker.
+
+AeroTracker is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AeroTracker is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AeroTracker.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+import typing
+from aero_tracker.params.at_sensor_cluster_params import ATSensorClusterParams
+from aero_tracker.ble.ble_packet import BLE_Packet
+from aero_tracker.trilateration.time_slice import TimeSlice
+
+class AT_TargetSortItem(object):
+    
+    time_slice = TimeSlice
+    ble_packets = [BLE_Packet]
+    
+    def add(self, blepkt:BLE_Packet):
+        self.ble_packets.append(blepkt)
+        return
+    
+    def __init__(self, time_slice:TimeSlice, blepkt:BLE_Packet):
+        self.time_slice = time_slice
+        self.ble_packets = [blepkt]
+        return
+    
+
+class AT_TargetSort(object):
+    '''
+    Sorts incoming BLE Packets by target and returns time time slices.
+    '''
+    
+    _target_data = typing.Dict
+    _params = ATSensorClusterParams
+    
+    def add(self, blepkt:BLE_Packet):
+        if (blepkt.sensor_id in self._target_data):
+            self._target_data[blepkt.mac_address].append(blepkt)
+            return
+        
+        #making it this far means the target does not exist
+        self._target_data.update({blepkt.mac_address:[blepkt]})
+        return
+    
+    def get_target_time_slices(self)->typing.List[AT_TargetSortItem]:
+        '''
+        Returns a list of all targets and values organized in a time slice.
+        '''
+        rval = []
+        
+#         pkt = BLE_Packet
+#         ts = TimeSlice
+#         sort_item = AT_TargetSortItem
+        
+        for target_id in self._target_data:
+            target_pkts = self._target_data[target_id]
+            
+            for i in range(0, len(target_pkts)):
+                pkt = target_pkts[i]
+                if (i == 0):
+                    ts = TimeSlice(time_val=pkt.packet_timestamp, sec_div=self._params.samples_per_sec)
+                    sort_item = AT_TargetSortItem(time_slice=ts, blepkt=pkt)
+                else:
+                    sort_item.add(blepkt=pkt)
+            rval.append(sort_item)
+        return rval
+
+
+    def __init__(self, params:ATSensorClusterParams):
+        '''
+        Constructor
+        '''
+        self._target_data = {}
+        self._params = params
+        return
+        
